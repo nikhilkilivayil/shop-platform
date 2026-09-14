@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>വിപണി സൂപ്പർമാർക്കറ്റ് - Vipani Online Shop</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+</head>
+<body>
+
+  <!-- Navigation Header -->
+  <header class="header">
+    <div class="nav-container">
+      <div class="brand" id="brand-home-btn">
+        <div class="brand-icon">🛒</div>
+        <div class="brand-info">
+          <h1 id="header-shop-name">വിപണി സൂപ്പർമാർക്കറ്റ്</h1>
+          <span id="header-shop-tagline">ഗുണമേന്മയുള്ള സാധനങ്ങൾ, വേഗത്തിൽ</span>
+        </div>
+      </div>
+
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" class="search-input" placeholder="സാധനങ്ങൾ തിരയുക... (Search products)..." autocomplete="off">
+      </div>
+
+      <div class="nav-actions">
+        <!-- Language Switcher -->
+        <button id="lang-toggle-btn" class="btn btn-secondary lang-btn" title="Switch Language">
+          🌐 <span id="current-lang-text">മലയാളം</span>
+        </button>
+
+        <!-- Customer Login / Profile Button -->
+        <button id="nav-customer-btn" class="btn btn-secondary btn-sm" style="border-color: #0f766e; color: #0f766e; font-weight: 700;">
+          👤 <span id="customer-btn-label">ലോഗിൻ / ഒടിപി</span>
+        </button>
+
+        <!-- Order Tracking -->
+        <button id="nav-track-btn" class="btn btn-secondary btn-sm">
+          📦 <span data-i18n="trackOrders">ഓർഡറുകൾ</span>
+        </button>
+
+        <!-- Admin Portal Switch -->
+        <button id="nav-admin-btn" class="btn btn-secondary btn-sm">
+          ⚙️ <span id="admin-btn-label">അഡ്മിൻ</span>
+        </button>
+
+        <!-- Cart Button -->
+        <button id="nav-cart-btn" class="btn btn-primary cart-btn">
+          🛒 <span data-i18n="cart">കാർട്ട്</span>
+          <span id="cart-badge-count" class="cart-badge">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Storefront View -->
+  <main class="main-wrapper" id="storefront-view">
+    
+    <!-- Hero Banner -->
+    <section class="hero-banner">
+      <div class="hero-content">
+        <span class="hero-tag" data-i18n="welcomeOffer">🎉 പുതിയ ഓഫറുകൾ ലഭ്യമാണ്</span>
+        <h2 class="hero-title" id="hero-banner-title">നിങ്ങളുടെ പ്രിയപ്പെട്ട സാധനങ്ങൾ വീട്ടുപടിക്കൽ!</h2>
+        <p class="hero-subtitle" id="hero-banner-sub">ഫ്രഷ് പച്ചക്കറികൾ, പലചരക്ക് സാധനങ്ങൾ, സുഗന്ധവ്യഞ്ജനങ്ങൾ എന്നിവ ഏറ്റവും കുറഞ്ഞ നിരക്കിൽ ഓൺലൈനായി ഓർഡർ ചെയ്യാം.</p>
+        <div class="hero-badges">
+          <div class="hero-pill">⚡ <span data-i18n="fastDelivery">വേഗത്തിലുള്ള ഡെലിവറി</span></div>
+          <div class="hero-pill">💳 <span data-i18n="onlinePaymentAccepted">UPI & Card പേയ്‌മെന്റുകൾ</span></div>
+          <div class="hero-pill">🏷️ <span data-i18n="freeDeliveryTag">₹500-ന് മുകളിൽ സൗജന്യ ഡെലിവറി</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Category Chips Bar -->
+    <div class="categories-bar" id="categories-container">
+      <button class="category-chip active" data-slug="all">
+        <span class="category-icon">✨</span>
+        <span data-i18n="allCategories">എല്ലാം (All)</span>
+      </button>
+    </div>
+
+    <!-- Filter & Sort Toolbar -->
+    <div class="filter-row">
+      <div class="filter-left">
+        <span class="products-count" id="products-count-label">ഉൽപ്പന്നങ്ങൾ കണ്ടെത്തുന്നു...</span>
+      </div>
+      <div class="filter-right">
+        <label class="stock-toggle-label">
+          <input type="checkbox" id="filter-stock-only">
+          <span data-i18n="inStockOnly">സ്റ്റോക്കുള്ളവ മാത്രം</span>
+        </label>
+        <select id="sort-select" class="sort-select">
+          <option value="newest" data-i18n="sortNewest">പുതിയവ (Newest)</option>
+          <option value="price_asc" data-i18n="sortPriceAsc">വില: കുറഞ്ഞത് ആദ്യം</option>
+          <option value="price_desc" data-i18n="sortPriceDesc">വില: കൂടിയത് ആദ്യം</option>
+          <option value="name" data-i18n="sortName">പേര് അടിസ്ഥാനത്തിൽ (A-Z)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Product Grid -->
+    <div class="product-grid" id="product-grid">
+      <!-- Dynamically populated -->
+    </div>
+
+  </main>
+
+  <!-- Customer Mobile OTP Login Modal -->
+  <div class="modal-overlay" id="otp-login-modal">
+    <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title">📱 ഉപഭോക്തൃ ലോഗിൻ (Customer Login)</h3>
+        <button class="modal-close" onclick="closeModal('otp-login-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Step 1: Mobile Input -->
+        <div id="otp-step-phone">
+          <div style="text-align: center; margin-bottom: 1.25rem;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.3rem;">📲</div>
+            <h4 style="font-size: 1.1rem; font-weight: 700;">മൊബൈൽ നമ്പർ നൽകുക</h4>
+            <p style="font-size: 0.825rem; color: var(--text-muted); margin-top: 0.2rem;">
+              പാസ്‌വേഡ് ആവശ്യമില്ല. നിങ്ങളുടെ മൊബൈൽ നമ്പറിലേക്ക് 4-അക്ക OTP ലഭിക്കും.
+            </p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">10-അക്ക മൊബൈൽ നമ്പർ (Mobile Number) *</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <span style="background: #f1f5f9; border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 0.65rem 0.85rem; font-weight: 700; font-size: 0.9rem;">+91</span>
+              <input type="tel" id="otp-phone-input" class="form-input" placeholder="98765 43210" maxlength="10" required>
+            </div>
+          </div>
+          <button id="otp-send-btn" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
+            📩 ഒടിപി അയക്കുക (Get OTP)
+          </button>
+        </div>
+
+        <!-- Step 2: OTP Verification -->
+        <div id="otp-step-code" style="display: none;">
+          <div style="text-align: center; margin-bottom: 1.25rem;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.3rem;">🔐</div>
+            <h4 style="font-size: 1.1rem; font-weight: 700;">OTP നൽകുക</h4>
+            <p style="font-size: 0.825rem; color: var(--text-muted);">
+              <b id="otp-sent-phone-display">+91 </b> എന്ന നമ്പറിലേക്ക് അയച്ച 4-അക്ക കോഡ് ഇവിടെ നൽകുക.
+            </p>
+          </div>
+
+          <!-- Simulated SMS Notification Box -->
+          <div id="simulated-sms-box" style="background: #e0f2fe; border: 1px dashed #0284c7; border-radius: var(--radius-md); padding: 0.75rem; margin-bottom: 1.25rem; font-size: 0.85rem; color: #0369a1; cursor: pointer;" title="Click to auto-fill">
+            <div style="font-weight: 700; display: flex; justify-content: space-between;">
+              <span>💬 SMS നോട്ടിഫിക്കേഷൻ:</span>
+              <span style="font-size: 0.75rem; color: #0284c7; text-decoration: underline;">ഓട്ടോ-ഫിൽ ചെയ്യുക</span>
+            </div>
+            <div id="simulated-sms-text" style="font-weight: 800; font-size: 1.05rem; margin-top: 0.25rem; color: #0c4a6e;">
+              നിങ്ങളുടെ ഒടിപി: ----
+            </div>
+          </div>
+
+          <!-- Welcome back greeting for existing user -->
+          <div id="otp-welcome-existing" style="display: none; background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: var(--radius-md); padding: 0.65rem 0.85rem; margin-bottom: 1rem; font-size: 0.85rem; color: #065f46; font-weight: 700;">
+            👋 തിരിച്ചുവരവിന് സ്വാഗതം, <span id="otp-existing-user-name"></span>!
+          </div>
+
+          <div class="form-group" id="otp-name-group">
+            <label class="form-label">നിങ്ങളുടെ പേര് (Your Name)</label>
+            <input type="text" id="otp-name-input" class="form-input" placeholder="e.g. അരുൺ കുമാർ">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">4-അക്ക OTP കോഡ് *</label>
+            <input type="text" id="otp-code-input" class="form-input" placeholder="1234" maxlength="6" style="font-size: 1.25rem; text-align: center; letter-spacing: 4px; font-weight: 800;" required>
+          </div>
+
+          <div style="display: flex; gap: 0.5rem;">
+            <button id="otp-back-btn" class="btn btn-secondary" style="flex: 1;">മടങ്ങുക</button>
+            <button id="otp-verify-btn" class="btn btn-primary" style="flex: 2; padding: 0.75rem;">
+              ✅ പരിശോധിച്ച് ലോഗിൻ ചെയ്യുക
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Profile & Purchase History Modal -->
+  <div class="modal-overlay" id="customer-profile-modal">
+    <div class="modal-content" style="max-width: 750px;">
+      <div class="modal-header">
+        <h3 class="modal-title">👤 ഉപഭോക്തൃ പ്രൊഫൈൽ & ഓർഡർ ഹിസ്റ്ററി</h3>
+        <button class="modal-close" onclick="closeModal('customer-profile-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Profile Tabs -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border);">
+          <button class="admin-tab-btn active" id="cp-tab-profile-btn" onclick="switchCustomerTab('profile')">
+            📝 എന്റെ പ്രൊഫൈൽ (My Profile)
+          </button>
+          <button class="admin-tab-btn" id="cp-tab-orders-btn" onclick="switchCustomerTab('orders')">
+            🛍️ പർച്ചേസ് ഹിസ്റ്ററി (Purchase History)
+          </button>
+        </div>
+
+        <!-- Tab 1: Profile & Delivery Address -->
+        <div id="cp-tab-profile">
+          <form id="customer-profile-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">പേര് (Name)</label>
+                <input type="text" id="cp-name" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">മൊബൈൽ നമ്പർ (Mobile)</label>
+                <input type="text" id="cp-phone" class="form-input" readonly style="background: #f1f5f9; cursor: not-allowed;">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">ഡിവൈസ് ഐഡി (Device ID)</label>
+              <input type="text" id="cp-device-id" class="form-input" readonly style="background: #f1f5f9; font-size: 0.75rem; color: var(--text-muted);">
+            </div>
+
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 1.25rem 0 0.5rem;">
+              📍 സ്ഥിരം ഡെലിവറി വിലാസം (Saved Delivery Address)
+            </h4>
+
+            <div class="form-group">
+              <label class="form-label">വീട്ടുപേര് / ഫ്ലാറ്റ് / സ്ട്രീറ്റ് വിലാസം</label>
+              <textarea id="cp-address" class="form-textarea" rows="2" placeholder="House / Flat, Landmark, Area"></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">സ്ഥലം / നഗരം (City)</label>
+                <input type="text" id="cp-city" class="form-input" value="Kochi">
+              </div>
+              <div class="form-group">
+                <label class="form-label">പിൻകോഡ് (Pincode)</label>
+                <input type="text" id="cp-pincode" class="form-input" placeholder="682001">
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+              <button type="button" id="customer-logout-btn" class="btn btn-danger btn-sm">
+                🚪 അക്കൗണ്ട് ലോഗൗട്ട് ചെയ്യുക
+              </button>
+              <button type="submit" class="btn btn-primary">
+                💾 പ്രൊഫൈൽ സേവ് ചെയ്യുക
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tab 2: Purchase History (Master-Detail) -->
+        <div id="cp-tab-orders" style="display: none;">
+          <!-- Master List View -->
+          <div id="cp-orders-list-view">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+              <span id="cp-orders-count-label" style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">
+                എല്ലാ ഓർഡറുകളും (All Orders)
+              </span>
+              <button class="btn btn-secondary btn-sm" onclick="loadCustomerPurchaseHistory()">🔄 റിഫ്രഷ്</button>
+            </div>
+            <div id="cp-orders-list-container">
+              <p style="text-align: center; color: var(--text-muted); padding: 2rem;">ഓർഡറുകൾ ലോഡ് ചെയ്യുന്നു...</p>
+            </div>
+          </div>
+
+          <!-- Detail View -->
+          <div id="cp-order-detail-view" style="display: none;">
+            <!-- Dynamically populated on order click -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Control Panel View -->
+  <div class="main-wrapper admin-wrapper" id="admin-view">
+    <div class="admin-header">
+      <div>
+        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">⚙️ ഷോപ്പ് അഡ്മിൻ പാനൽ (Shop Admin)</h2>
+        <p style="font-size: 0.875rem; color: var(--text-muted);">ഉൽപ്പന്നങ്ങൾ ചേർക്കാനും, ഓർഡറുകൾ പരിശോധിക്കാനും, ഉപഭോക്താക്കളെ നിയന്ത്രിക്കാനുമുള്ള പാനൽ.</p>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button id="admin-add-product-btn" class="btn btn-primary">
+          ➕ <span data-i18n="addNewProduct">പുതിയ ഉൽപ്പന്നം ചേർക്കുക</span>
+        </button>
+        <button id="admin-exit-btn" class="btn btn-secondary">
+          🏪 <span data-i18n="viewStore">സ്റ്റോറിലേക്ക് മടങ്ങുക</span>
+        </button>
+        <button id="admin-logout-btn" class="btn btn-danger btn-sm">
+          🚪 <span data-i18n="logout">ലോഗൗട്ട്</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI Dashboard Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background: #e0f2fe; color: #0284c7;">💰</div>
+        <div>
+          <div class="kpi-val" id="kpi-revenue">₹0</div>
+          <div class="kpi-label" data-i18n="totalRevenue">ആകെ വിറ്റുവരവ്</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background: #fef3c7; color: #d97706;">📦</div>
+        <div>
+          <div class="kpi-val" id="kpi-orders">0</div>
+          <div class="kpi-label" data-i18n="totalOrders">ആകെ ഓർഡറുകൾ</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background: #fce7f3; color: #db2777;">⏳</div>
+        <div>
+          <div class="kpi-val" id="kpi-pending">0</div>
+          <div class="kpi-label" data-i18n="pendingOrders">തീർപ്പാക്കാനുള്ളവ</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background: #dcfce7; color: #16a34a;">👥</div>
+        <div>
+          <div class="kpi-val" id="kpi-users">0</div>
+          <div class="kpi-label">ഉപഭോക്താക്കൾ (Users)</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon" style="background: #fee2e2; color: #dc2626;">⚠️</div>
+        <div>
+          <div class="kpi-val" id="kpi-lowstock">0</div>
+          <div class="kpi-label" data-i18n="lowStockAlerts">കുറഞ്ഞ സ്റ്റോക്ക്</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Navigation Tabs -->
+    <div class="admin-tabs">
+      <button class="admin-tab-btn active" data-tab="products">📦 <span data-i18n="productsTab">ഉൽപ്പന്നങ്ങൾ (Products)</span></button>
+      <button class="admin-tab-btn" data-tab="orders">🛍️ <span data-i18n="ordersTab">ഓർഡറുകൾ (Live Orders)</span></button>
+      <button class="admin-tab-btn" data-tab="users">👥 <span>ഉപഭോക്താക്കൾ (Users Directory)</span></button>
+      <button class="admin-tab-btn" data-tab="settings">⚙️ <span data-i18n="settingsTab">സ്റ്റോർ ക്രമീകരണങ്ങൾ (Settings)</span></button>
+    </div>
+
+    <!-- Tab 1: Products Management -->
+    <div class="admin-tab-content" id="admin-tab-products">
+      <div class="admin-table-wrap">
+        <table class="table" id="admin-products-table">
+          <thead>
+            <tr>
+              <th>ചിത്രം</th>
+              <th>ഉൽപ്പന്നത്തിന്റെ പേര്</th>
+              <th>കാറ്റഗറി</th>
+              <th>വില (Price)</th>
+              <th>MRP</th>
+              <th>സ്റ്റോക്ക്</th>
+              <th>സ്റ്റാറ്റസ്</th>
+              <th>പ്രവർത്തനങ്ങൾ</th>
+            </tr>
+          </thead>
+          <tbody id="admin-products-tbody">
+            <!-- Dynamic rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 2: Orders Management -->
+    <div class="admin-tab-content" id="admin-tab-orders" style="display: none;">
+      <div class="admin-table-wrap">
+        <table class="table" id="admin-orders-table">
+          <thead>
+            <tr>
+              <th>ഓർഡർ ഐഡി</th>
+              <th>ഉപഭോക്താവ്</th>
+              <th>ഫോൺ</th>
+              <th>തുക</th>
+              <th>പേയ്‌മെന്റ്</th>
+              <th>തീയതി</th>
+              <th>സ്റ്റാറ്റസ്</th>
+              <th>പ്രവർത്തനങ്ങൾ</th>
+            </tr>
+          </thead>
+          <tbody id="admin-orders-tbody">
+            <!-- Dynamic rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 3: Users Directory & Block Management -->
+    <div class="admin-tab-content" id="admin-tab-users" style="display: none;">
+      <div class="admin-table-wrap">
+        <table class="table" id="admin-users-table">
+          <thead>
+            <tr>
+              <th>യൂസർ ഐഡി</th>
+              <th>പേര് & ഫോൺ</th>
+              <th>ഡിവൈസ് ഐഡി (Device ID)</th>
+              <th>ആകെ ഓർഡറുകൾ</th>
+              <th>ആകെ പർച്ചേസ് തുക</th>
+              <th>സ്റ്റാറ്റസ്</th>
+              <th>പ്രവർത്തനങ്ങൾ</th>
+            </tr>
+          </thead>
+          <tbody id="admin-users-tbody">
+            <!-- Dynamic rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 4: Store Settings -->
+    <div class="admin-tab-content" id="admin-tab-settings" style="display: none;">
+      <div style="background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 1.5rem; max-width: 700px;">
+        <h3 style="margin-bottom: 1.25rem; font-weight: 700;">🏪 ഷോപ്പ് വിവരങ്ങൾ ക്രമീകരിക്കുക</h3>
+        <form id="store-settings-form">
+          <div class="form-group">
+            <label class="form-label">ഷോപ്പിന്റെ പേര് (Shop Name)</label>
+            <input type="text" id="setting-shop-name" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ടാഗ്‌ലൈൻ (Tagline)</label>
+            <input type="text" id="setting-shop-tagline" class="form-input">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">ഫോൺ നമ്പർ (Phone)</label>
+              <input type="text" id="setting-shop-phone" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">UPI ID (ഓൺലൈൻ പേയ്‌മെന്റിനായി)</label>
+              <input type="text" id="setting-upi-id" class="form-input" placeholder="e.g. shop@upi" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">വിലാസം (Shop Address)</label>
+            <textarea id="setting-shop-address" class="form-textarea" rows="2"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">സൗജന്യ ഡെലിവറി മിനിമം തുക (₹)</label>
+              <input type="number" id="setting-free-delivery" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">സാധാരണ ഡെലിവറി ചാർജ് (₹)</label>
+              <input type="number" id="setting-standard-fee" class="form-input" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">💾 മാറ്റങ്ങൾ സേവ് ചെയ്യുക (Save Settings)</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Product Details Modal -->
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="pm-title">ഉൽപ്പന്ന വിവരങ്ങൾ</h3>
+        <button class="modal-close" onclick="closeModal('product-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align: center; margin-bottom: 1.25rem; height: 220px; background: #f8fafc; border-radius: var(--radius-md); overflow: hidden;">
+          <img id="pm-img" src="" alt="Product" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span id="pm-category" class="card-category">കാറ്റഗറി</span>
+          <span id="pm-stock-badge" class="stock-badge-tag in-stock">In Stock</span>
+        </div>
+        <h2 id="pm-name" style="font-size: 1.35rem; font-weight: 800; margin-bottom: 0.4rem;"></h2>
+        <div style="display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 1rem;">
+          <span id="pm-price" class="current-price" style="font-size: 1.5rem;">₹0</span>
+          <span id="pm-mrp" class="mrp-price" style="font-size: 0.95rem;">₹0</span>
+          <span id="pm-discount" class="discount-badge" style="position: static;">0% OFF</span>
+          <span id="pm-unit" style="font-size: 0.85rem; color: var(--text-muted);"></span>
+        </div>
+        <p id="pm-desc" style="font-size: 0.95rem; color: #475569; line-height: 1.6; margin-bottom: 1.25rem;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('product-modal')" data-i18n="close">അടയ്ക്കുക</button>
+        <button id="pm-add-cart-btn" class="btn btn-primary">🛒 <span data-i18n="addToCart">കാർട്ടിൽ ചേർക്കുക</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart Drawer -->
+  <div class="cart-drawer" id="cart-drawer">
+    <div class="cart-drawer-header">
+      <h3 style="font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
+        🛒 <span data-i18n="yourCart">ഷോപ്പിംഗ് കാർട്ട്</span> (<span id="cart-drawer-count">0</span>)
+      </h3>
+      <button class="modal-close" id="close-cart-btn">&times;</button>
+    </div>
+    <div class="cart-items-list" id="cart-items-container">
+      <!-- Items populated here -->
+    </div>
+    <div class="cart-drawer-footer">
+      <div class="bill-line">
+        <span data-i18n="subtotal">സബ്ടോട്ടൽ (Subtotal):</span>
+        <span id="cart-subtotal" style="font-weight: 700;">₹0</span>
+      </div>
+      <div class="bill-line">
+        <span data-i18n="deliveryCharge">ഡെലിവറി ചാർജ്:</span>
+        <span id="cart-delivery-fee" style="font-weight: 700;">₹0</span>
+      </div>
+      <div class="bill-line" id="cart-discount-line" style="display: none; color: #16a34a;">
+        <span data-i18n="discount">ഡിസ്കൗണ്ട് ഓഫർ:</span>
+        <span id="cart-discount-val" style="font-weight: 700;">-₹0</span>
+      </div>
+      <div class="bill-line bill-total">
+        <span data-i18n="grandTotal">ആകെ നൽകേണ്ട തുക:</span>
+        <span id="cart-grand-total">₹0</span>
+      </div>
+      <div id="cart-delivery-hint" style="font-size: 0.75rem; color: var(--primary); margin: 0.5rem 0 0.75rem; font-weight: 600;">
+        💡 ₹500-ന് മുകളിലുള്ള ഓർഡറുകൾക്ക് ഡെലിവറി തികച്ചും സൗജന്യമാണ്!
+      </div>
+      <button id="checkout-btn" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
+        💳 <span data-i18n="proceedToCheckout">ഓർഡർ നൽകി പണമടയ്ക്കുക</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Checkout & Online Payment Modal -->
+  <div class="modal-overlay" id="checkout-modal">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🛍️ ചെക്ക്ഔട്ടും ഓൺലൈൻ പേയ്‌മെന്റും</h3>
+        <button class="modal-close" onclick="closeModal('checkout-modal')">&times;</button>
+      </div>
+      <form id="checkout-form">
+        <div class="modal-body">
+          <div id="checkout-logged-banner" style="display: none; background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: var(--radius-md); padding: 0.65rem 0.85rem; margin-bottom: 1rem; font-size: 0.825rem; color: #065f46;">
+            ✅ <b>ലോഗിൻ ചെയ്തിരിക്കുന്നു:</b> നിങ്ങളുടെ പ്രൊഫൈൽ വിലാസം സ്വയമേവ പൂരിപ്പിച്ചു.
+          </div>
+
+          <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--primary);">
+            📍 1. ഡെലിവറി വിലാസം (Shipping Details)
+          </h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" data-i18n="fullName">മുഴുവൻ പേര് *</label>
+              <input type="text" id="co-name" class="form-input" placeholder="e.g. സുരേഷ് കുമാർ" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="phoneNumber">മൊബൈൽ നമ്പർ *</label>
+              <input type="tel" id="co-phone" class="form-input" placeholder="+91 98765 43210" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="address">വീട്ടുപേര് / ഫ്ലാറ്റ് / സ്ട്രീറ്റ് വിലാസം *</label>
+            <input type="text" id="co-address" class="form-input" placeholder="House / Flat No, Landmark, Area" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" data-i18n="city">നഗരം / സ്ഥലം</label>
+              <input type="text" id="co-city" class="form-input" value="Kochi" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="pincode">പിൻകോഡ് (Pincode)</label>
+              <input type="text" id="co-pincode" class="form-input" placeholder="682001" required>
+            </div>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid var(--border); margin: 1.25rem 0;">
+
+          <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--primary);">
+            💳 2. ഓൺലൈൻ പേയ്‌മെന്റ് രീതി തിരഞ്ഞെടുക്കുക (Payment Mode)
+          </h4>
+
+          <div class="payment-methods">
+            <div class="payment-card selected" data-method="UPI">
+              <div class="payment-card-icon">📱</div>
+              <div class="payment-card-title">UPI (GPay / PhonePe / QR)</div>
+              <div style="font-size: 0.7rem; color: var(--text-muted);">ഇൻസ്റ്റന്റ് ട്രാൻസ്ഫർ</div>
+            </div>
+            <div class="payment-card" data-method="CARD">
+              <div class="payment-card-icon">💳</div>
+              <div class="payment-card-title">Debit / Credit Card</div>
+              <div style="font-size: 0.7rem; color: var(--text-muted);">Visa, RuPay, MasterCard</div>
+            </div>
+            <div class="payment-card" data-method="NETBANKING">
+              <div class="payment-card-icon">🏦</div>
+              <div class="payment-card-title">Net Banking</div>
+              <div style="font-size: 0.7rem; color: var(--text-muted);">All Indian Banks</div>
+            </div>
+            <div class="payment-card" data-method="COD">
+              <div class="payment-card-icon">💵</div>
+              <div class="payment-card-title">Cash on Delivery</div>
+              <div style="font-size: 0.7rem; color: var(--text-muted);">സാധനം എത്തുമ്പോൾ നൽകാം</div>
+            </div>
+          </div>
+
+          <!-- Dynamic Payment Sub-panels -->
+          <div id="payment-panel-upi" style="background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 1rem;">
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+              <div style="background: white; padding: 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
+                <svg width="120" height="120" viewBox="0 0 100 100">
+                  <rect width="100" height="100" fill="#ffffff"/>
+                  <rect x="10" y="10" width="25" height="25" fill="#0f766e"/>
+                  <rect x="15" y="15" width="15" height="15" fill="#ffffff"/>
+                  <rect x="18" y="18" width="9" height="9" fill="#0f766e"/>
+                  <rect x="65" y="10" width="25" height="25" fill="#0f766e"/>
+                  <rect x="70" y="15" width="15" height="15" fill="#ffffff"/>
+                  <rect x="73" y="18" width="9" height="9" fill="#0f766e"/>
+                  <rect x="10" y="65" width="25" height="25" fill="#0f766e"/>
+                  <rect x="15" y="70" width="15" height="15" fill="#ffffff"/>
+                  <rect x="18" y="73" width="9" height="9" fill="#0f766e"/>
+                  <rect x="42" y="15" width="8" height="12" fill="#0f766e"/>
+                  <rect x="42" y="42" width="16" height="16" fill="#0f766e"/>
+                  <rect x="65" y="45" width="10" height="10" fill="#0f766e"/>
+                  <rect x="45" y="68" width="15" height="15" fill="#0f766e"/>
+                  <rect x="70" y="70" width="15" height="10" fill="#0f766e"/>
+                </svg>
+                <div style="font-size: 0.65rem; font-weight: 700; color: var(--primary);">SCAN & PAY</div>
+              </div>
+              <div style="flex: 1; min-width: 200px;">
+                <div style="font-size: 0.85rem; font-weight: 700; margin-bottom: 0.3rem;">ഷോപ്പ് UPI ID:</div>
+                <div style="background: white; padding: 0.4rem 0.65rem; border-radius: var(--radius-sm); border: 1px dashed var(--primary); font-weight: 800; color: var(--primary); font-size: 0.95rem;" id="co-shop-upi">
+                  vipanistore@okhdfcbank
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem;">
+                  Google Pay, PhonePe, Paytm അല്ലെങ്കിൽ മറ്റേതെങ്കിലും UPI ആപ്പ് ഉപയോഗിച്ച് സ്കാൻ ചെയ്യുക.
+                </div>
+                <div style="margin-top: 0.6rem;">
+                  <input type="text" id="co-user-upi-id" class="form-input" placeholder="നിങ്ങളുടെ UPI ഐഡി (ഉദാ: user@oksbi)">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="payment-panel-card" style="display: none; background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 1rem;">
+            <div class="form-group">
+              <label class="form-label">കാർഡ് നമ്പർ (Card Number)</label>
+              <input type="text" id="co-card-num" class="form-input" placeholder="4111 2222 3333 4444" maxlength="19">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">വാലിഡിറ്റി (Expiry MM/YY)</label>
+                <input type="text" id="co-card-exp" class="form-input" placeholder="12/28" maxlength="5">
+              </div>
+              <div class="form-group">
+                <label class="form-label">CVV (3 അക്കം)</label>
+                <input type="password" id="co-card-cvv" class="form-input" placeholder="***" maxlength="3">
+              </div>
+            </div>
+          </div>
+
+          <div id="payment-panel-netbanking" style="display: none; background: #f8fafc; padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 1rem;">
+            <div class="form-group">
+              <label class="form-label">ബാങ്ക് തിരഞ്ഞെടുക്കുക (Select Bank)</label>
+              <select id="co-bank-select" class="form-select">
+                <option value="SBI">State Bank of India (SBI)</option>
+                <option value="HDFC">HDFC Bank</option>
+                <option value="ICICI">ICICI Bank</option>
+                <option value="FEDERAL">Federal Bank</option>
+                <option value="AXIS">Axis Bank</option>
+                <option value="CANARA">Canara Bank</option>
+                <option value="KGB">Kerala Gramin Bank</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="payment-panel-cod" style="display: none; background: #fef3c7; color: #92400e; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.875rem;">
+            💵 സാധനങ്ങൾ കൈപ്പറ്റുമ്പോൾ മാത്രം ഡെലിവറി ബോയിക്ക് പണം നേരിട്ടോ UPI വഴിയോ നൽകിയാൽ മതിയാകും.
+          </div>
+
+          <!-- Checkout Total Breakdown -->
+          <div style="background: white; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem;">
+            <div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 1.15rem;">
+              <span>ആകെ അടയ്ക്കാനുള്ള തുക:</span>
+              <span id="co-total-amount" style="color: var(--primary);">₹0</span>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('checkout-modal')">റദ്ദാക്കുക</button>
+          <button type="submit" id="co-submit-btn" class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-size: 1rem;">
+            🔒 <span id="co-submit-label">പണമടച്ച് ഓർഡർ കൺഫേം ചെയ്യുക</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Payment Processing Animation & Success Screen Modal -->
+  <div class="modal-overlay" id="payment-result-modal">
+    <div class="modal-content" style="text-align: center; padding: 2.5rem 1.5rem; max-width: 480px;">
+      <!-- Spinner Step -->
+      <div id="payment-processing-step">
+        <div style="width: 60px; height: 60px; border: 5px solid #e2e8f0; border-top: 5px solid var(--primary); border-radius: 50%; margin: 0 auto 1.5rem; animation: spin 1s linear infinite;"></div>
+        <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem;">ഓൺലൈൻ പേയ്‌മെന്റ് പരിശോധിക്കുന്നു...</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">ദയവായി പേജ് റീഫ്രഷ് ചെയ്യരുത്. ബാങ്ക് സെർവറിലേക്ക് ബന്ധിപ്പിക്കുന്നു.</p>
+      </div>
+
+      <!-- Success Step -->
+      <div id="payment-success-step" style="display: none;">
+        <div style="width: 70px; height: 70px; background: #dcfce7; color: #16a34a; font-size: 2.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+          ✓
+        </div>
+        <h2 style="font-size: 1.5rem; font-weight: 800; color: #15803d; margin-bottom: 0.35rem;">ഓർഡർ വിജയകരമായി പൂർത്തിയായി!</h2>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem;">നിങ്ങളുടെ പേയ്‌മെന്റ് വിജയകരമായി ലഭിച്ചു. ഓർഡർ ഉടൻ തയ്യാറാക്കും.</p>
+        
+        <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; text-align: left; margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">ഓർഡർ നമ്പർ:</span>
+            <span style="font-weight: 800; color: var(--primary);" id="res-order-id">-</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.3rem;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">പേയ്‌മെന്റ് റഫറൻസ്:</span>
+            <span style="font-weight: 700; font-size: 0.85rem;" id="res-txn-id">-</span>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">അടച്ച തുക:</span>
+            <span style="font-weight: 800; color: #15803d;" id="res-amount">-</span>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+          <button id="res-view-invoice-btn" class="btn btn-primary" style="width: 100%;">
+            🧾 ബിൽ കാണുക / പ്രിന്റ് ചെയ്യുക (Print Invoice)
+          </button>
+          <button id="res-track-order-btn" class="btn btn-secondary" style="width: 100%;">
+            📦 ഓർഡർ എവിടെയെത്തി എന്ന് നോക്കുക (Track Order)
+          </button>
+          <button class="btn btn-secondary" onclick="closeModal('payment-result-modal')" style="width: 100%;">
+            🏪 തുടർന്നും ഷോപ്പിംഗ് ചെയ്യുക
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Digital Invoice Modal (Printable) -->
+  <div class="modal-overlay" id="invoice-modal">
+    <div class="modal-content" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🧾 റീറ്റെയ്ൽ ഇൻവോയ്സ് / ബിൽ (Tax Invoice)</h3>
+        <button class="modal-close" onclick="closeModal('invoice-modal')">&times;</button>
+      </div>
+      <div class="modal-body" id="invoice-printable-area">
+        <!-- Rendered dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('invoice-modal')">അടയ്ക്കുക</button>
+        <button class="btn btn-primary" onclick="window.print()">🖨️ പ്രിന്റ് / സേവ് ചെയ്യുക (Print)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Tracking Modal -->
+  <div class="modal-overlay" id="track-modal">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 class="modal-title">📦 ഓർഡർ ട്രാക്കിംഗ് (Track Your Order)</h3>
+        <button class="modal-close" onclick="closeModal('track-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
+          <input type="text" id="track-search-input" class="form-input" placeholder="മൊബൈൽ നമ്പർ അല്ലെങ്കിൽ ഓർഡർ ഐഡി നൽകുക...">
+          <button id="track-search-btn" class="btn btn-primary">തിരയുക</button>
+        </div>
+
+        <!-- Master List View for Track Modal -->
+        <div id="track-modal-list-view">
+          <div id="track-results-container">
+            <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 2rem 0;">
+              ഓർഡർ ചെയ്ത ഫോൺ നമ്പർ നൽകി നിങ്ങളുടെ ഓർഡർ എവിടെയെത്തി എന്ന് ഇവിടെ തത്സമയം ട്രാക്ക് ചെയ്യാം.
+            </p>
+          </div>
+        </div>
+
+        <!-- Detail View for Track Modal -->
+        <div id="track-modal-detail-view" style="display: none;">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Login Modal -->
+  <div class="modal-overlay" id="admin-login-modal">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🔐 അഡ്മിൻ ലോഗിൻ (Shop Login)</h3>
+        <button class="modal-close" onclick="closeModal('admin-login-modal')">&times;</button>
+      </div>
+      <form id="admin-login-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">ഇമെയിൽ വിലാസം (Email)</label>
+            <input type="email" id="login-email" class="form-input" value="admin@shop.local" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">പാസ്‌വേഡ് (Password)</label>
+            <input type="password" id="login-password" class="form-input" value="admin123" required>
+          </div>
+          <div style="background: #f1f5f9; padding: 0.75rem; border-radius: var(--radius-sm); font-size: 0.75rem; color: var(--text-muted);">
+            💡 Default Login:<br>
+            Email: <b>admin@shop.local</b> | Password: <b>admin123</b>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('admin-login-modal')">റദ്ദാക്കുക</button>
+          <button type="submit" class="btn btn-primary">ലോഗിൻ ചെയ്യുക</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add / Edit Product Modal -->
+  <div class="modal-overlay" id="product-form-modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="pf-modal-title">➕ പുതിയ ഉൽപ്പന്നം ചേർക്കുക</h3>
+        <button class="modal-close" onclick="closeModal('product-form-modal')">&times;</button>
+      </div>
+      <form id="product-form">
+        <input type="hidden" id="pf-id" value="">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">ഉൽപ്പന്നത്തിന്റെ പേര് (English) *</label>
+            <input type="text" id="pf-name" class="form-input" placeholder="e.g. Premium Coconut Oil" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ഉൽപ്പന്നത്തിന്റെ പേര് (മലയാളം)</label>
+            <input type="text" id="pf-name-ml" class="form-input" placeholder="e.g. ശുദ്ധമായ വെളിച്ചെണ്ണ (1 ലിറ്റർ)">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">കാറ്റഗറി (Category) *</label>
+              <select id="pf-category" class="form-select" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">യൂണിറ്റ് (Unit)</label>
+              <input type="text" id="pf-unit" class="form-input" placeholder="e.g. 1 Kg, 1 Litre, 1 Pkt">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">വിൽപ്പന വില (Selling Price ₹) *</label>
+              <input type="number" step="0.5" id="pf-price" class="form-input" placeholder="250" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">യഥാർത്ഥ MRP (₹)</label>
+              <input type="number" step="0.5" id="pf-mrp" class="form-input" placeholder="290">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">സ്റ്റോക്ക് അളവ് (Stock Qty) *</label>
+              <input type="number" id="pf-stock" class="form-input" placeholder="50" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">ഇമോജി ഐക്കൺ (അല്ലെങ്കിൽ ഇമേജ് URL)</label>
+              <input type="text" id="pf-icon" class="form-input" placeholder="e.g. 🌾, 🥥, 🍌, ☕">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">വിവരണം (Description)</label>
+            <textarea id="pf-desc" class="form-textarea" rows="3" placeholder="ഉൽപ്പന്നത്തിന്റെ ഗുണമേന്മ, ഉപയോഗം എന്നിവ..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('product-form-modal')">റദ്ദാക്കുക</button>
+          <button type="submit" class="btn btn-primary" id="pf-save-btn">💾 സേവ് ചെയ്യുക</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Embedded Spinner Keyframes -->
+  <style>
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+
+  <script src="app.js"></script>
+</body>
+</html>

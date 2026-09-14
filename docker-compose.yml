@@ -1,0 +1,21 @@
+services:
+  shop-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: shop-platform:latest
+    container_name: shop-platform
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - DATABASE_PATH=/data/shop.db
+      - NODE_ENV=production
+    volumes:
+      - shop_data:/data
+
+volumes:
+  shop_data:
+    driver: local

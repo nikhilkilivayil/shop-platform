@@ -1,0 +1,27 @@
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Node
+node_modules/
+
+# iOS Build artifacts
+ios/.build/
+ios/.swiftpm/
+ios/.swift-cache/
+ios/**/xcuserdata/
+ios/**/DerivedData/
+
+# Android Build artifacts
+android/.gradle/
+android/build/
+android/app/build/
+android/.idea/
+android/*.iml
+android/**/*.iml
+android/local.properties
+android/.cxx/
