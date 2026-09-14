@@ -250,12 +250,12 @@
     </div>
 
     <div id="remote-video-wrap">
-      <video id="remote-video" autoplay playsinline></video>
+      <video id="remote-video" autoplay playsinline webkit-playsinline></video>
       <audio id="remote-audio" autoplay playsinline></audio>
     </div>
 
     <div id="local-video-wrap" style="display: none;">
-      <video id="local-video" autoplay playsinline muted></video>
+      <video id="local-video" autoplay playsinline webkit-playsinline muted></video>
     </div>
 
     <div id="audio-call-visual" style="display: none;">
@@ -384,20 +384,21 @@
     async function initCall() {
       showNotice("മൈക്രോഫോണും ക്യാമറയും കണക്റ്റ് ചെയ്യുന്നു...");
       try {
-        const constraints = {
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          },
-          video: callType === "video" ? {
-            facingMode: currentFacingMode,
-            width: { ideal: 640 },
-            height: { ideal: 480 }
-          } : false
+        let constraints = {
+          audio: true,
+          video: callType === "video" ? { facingMode: currentFacingMode } : false
         };
 
-        localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        } catch(fallbackErr) {
+          console.warn("Retrying with basic constraints:", fallbackErr);
+          localStream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: callType === "video"
+          });
+        }
+
         hideNotice();
 
         if (callType === "video") {
@@ -409,8 +410,7 @@
 
       } catch (err) {
         console.error("Camera/Mic permission error:", err);
-        showNotice("ക്യാമറയോ മൈക്രോഫോണോ ഓപ്പൺ ചെയ്യാൻ സാധിച്ചില്ല. ദയവായി അനുമതി നൽകുക.");
-        setTimeout(() => endCallAndClose(), 3500);
+        showNotice("ക്യാമറയോ മൈക്രോഫോണോ ഓപ്പൺ ചെയ്യാൻ സാധിച്ചില്ല: " + (err.message || err.name));
       }
     }
 

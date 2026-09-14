@@ -32,6 +32,7 @@
 		E10000000000000000000002 /* Sources/ShopApp/ViewModels/LanguageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000001 /* Sources/ShopApp/ViewModels/LanguageStore.swift */; };
 		E20000000000000000000002 /* Sources/ShopApp/Views/Components/ProductImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000001 /* Sources/ShopApp/Views/Components/ProductImageView.swift */; };
 		E30000000000000000000002 /* Sources/ShopApp/Views/SupportChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30000000000000000000001 /* Sources/ShopApp/Views/SupportChatView.swift */; };
+		E40000000000000000000002 /* Sources/ShopApp/Views/WebRTCCallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E40000000000000000000001 /* Sources/ShopApp/Views/WebRTCCallView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,6 +72,7 @@
 		E10000000000000000000001 /* Sources/ShopApp/ViewModels/LanguageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/ShopApp/ViewModels/LanguageStore.swift; sourceTree = "<group>"; };
 		E20000000000000000000001 /* Sources/ShopApp/Views/Components/ProductImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/ShopApp/Views/Components/ProductImageView.swift; sourceTree = "<group>"; };
 		E30000000000000000000001 /* Sources/ShopApp/Views/SupportChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/ShopApp/Views/SupportChatView.swift; sourceTree = "<group>"; };
+		E40000000000000000000001 /* Sources/ShopApp/Views/WebRTCCallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/ShopApp/Views/WebRTCCallView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +110,7 @@
 			children = (
 				E20000000000000000000001 /* Sources/ShopApp/Views/Components/ProductImageView.swift */,
 				E30000000000000000000001 /* Sources/ShopApp/Views/SupportChatView.swift */,
+				E40000000000000000000001 /* Sources/ShopApp/Views/WebRTCCallView.swift */,
 				E10000000000000000000001 /* Sources/ShopApp/ViewModels/LanguageStore.swift */,
 				C00000000000000000000000 /* Sources/ShopApp/Models/Models.swift */,
 				C00000000000000000000001 /* Sources/ShopApp/Services/APIService.swift */,
@@ -221,6 +224,7 @@
 			files = (
 				E20000000000000000000002 /* Sources/ShopApp/Views/Components/ProductImageView.swift in Sources */,
 				E30000000000000000000002 /* Sources/ShopApp/Views/SupportChatView.swift in Sources */,
+				E40000000000000000000002 /* Sources/ShopApp/Views/WebRTCCallView.swift in Sources */,
 				E10000000000000000000002 /* Sources/ShopApp/ViewModels/LanguageStore.swift in Sources */,
 				D00000000000000000000000 /* Sources/ShopApp/Models/Models.swift in Sources */,
 				D00000000000000000000001 /* Sources/ShopApp/Services/APIService.swift in Sources */,

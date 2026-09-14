@@ -502,6 +502,14 @@ public struct SupportChatView: View {
     private func initiateCall(type: String) async {
         guard let t = thread else { return }
         let name = auth.currentUser?.name ?? "Customer"
+
+        #if os(iOS)
+        AVAudioSession.sharedInstance().requestRecordPermission { _ in }
+        if type == "video" {
+            AVCaptureDevice.requestAccess(for: .video) { _ in }
+        }
+        #endif
+
         do {
             let session = try await APIService.shared.startSupportCall(threadId: t.id, callType: type, callerName: name, token: auth.token)
             self.activeCall = session
@@ -513,6 +521,13 @@ public struct SupportChatView: View {
     }
 
     private func answerIncomingCall(_ call: SupportCallSession) {
+        #if os(iOS)
+        AVAudioSession.sharedInstance().requestRecordPermission { _ in }
+        if call.call_type == "video" {
+            AVCaptureDevice.requestAccess(for: .video) { _ in }
+        }
+        #endif
+
         self.activeCall = call
         self.showIncomingCallAlert = false
         self.showCallSheet = true
