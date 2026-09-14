@@ -3,7 +3,7 @@ import Foundation
 public final class APIService: @unchecked Sendable {
     public static let shared = APIService()
 
-    public static let defaultBaseURL: String = "http://localhost:3001/api"
+    public static let defaultBaseURL: String = "https://shop-platform-ky2m.onrender.com/api"
     private static let baseURLKey = "api_base_url"
 
     public var baseURL: String

@@ -84,13 +84,13 @@ class PreferencesManager(context: Context) {
     }
 
     fun getBaseUrl(): String {
-        return prefs.getString(KEY_BASE_URL, "http://10.0.2.2:3001/api") ?: "http://10.0.2.2:3001/api"
+        return prefs.getString(KEY_BASE_URL, "https://shop-platform-ky2m.onrender.com/api") ?: "https://shop-platform-ky2m.onrender.com/api"
     }
 
     fun setBaseUrl(url: String) {
         var clean = url.trim()
         if (clean.isEmpty()) {
-            clean = "http://10.0.2.2:3001/api"
+            clean = "https://shop-platform-ky2m.onrender.com/api"
         }
         if (clean.endsWith("/")) {
             clean = clean.dropLast(1)

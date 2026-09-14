@@ -12,7 +12,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 
-class ApiService(private var baseUrl: String = "http://10.0.2.2:3001/api") {
+class ApiService(private var baseUrl: String = "https://shop-platform-ky2m.onrender.com/api") {
 
     fun updateBaseUrl(newUrl: String) {
         baseUrl = newUrl.trimEnd('/')

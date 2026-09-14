@@ -221,7 +221,7 @@ public struct ProfileView: View {
                 .font(.system(size: 12))
                 .foregroundColor(ShopTheme.textSecondary)
 
-            TextField("http://localhost:3001/api", text: $serverUrl)
+            TextField("https://shop-platform-ky2m.onrender.com/api", text: $serverUrl)
                 .font(.system(size: 13, design: .monospaced))
                 .padding(10)
                 .background(ShopTheme.background)
