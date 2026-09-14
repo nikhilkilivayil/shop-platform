@@ -1,5 +1,7 @@
 # വിപണി സൂപ്പർമാർക്കറ്റ് - Full-Stack Shop Management & E-Commerce Web App
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/nikhilkilivayil/shop-platform)
+
 നിങ്ങളുടെ പുതിയ ഷോപ്പിനായി സാധനങ്ങൾ ലിസ്റ്റ് ചെയ്യാനും (Admin Product Management), ഉപഭോക്താക്കൾക്ക് ഓൺലൈനായി സാധനങ്ങൾ കാണാനും, ഓർഡർ ചെയ്യാനും, പണമടയ്ക്കാനും (Customer Storefront & Online Payment) സാധിക്കുന്ന സമ്പൂർണ്ണമായ സോഫ്റ്റ്‌വെയർ ആപ്ലിക്കേഷൻ.
 
 ---
