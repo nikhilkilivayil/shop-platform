@@ -2022,6 +2022,525 @@ async function init() {
   await loadSettings();
   await loadCategories();
   await loadProducts();
+  initCustomerSupport();
 }
 
 window.addEventListener("DOMContentLoaded", init);
+
+// ==========================================
+// Customer Care Support & Calling (Web Storefront)
+// ==========================================
+
+let custSupportThread = null;
+let custSupportPollInterval = null;
+let custMediaRecorder = null;
+let custAudioChunks = [];
+let custRecordStartTime = 0;
+let custRecordInterval = null;
+
+let custPeerConnection = null;
+let custLocalStream = null;
+let custCurrentCall = null;
+let custCallTimerInterval = null;
+let custCallPollInterval = null;
+
+const custRtcConfig = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" }
+  ]
+};
+
+function initCustomerSupport() {
+  const floatBtn = document.getElementById("floating-support-btn");
+  if (!floatBtn) return;
+
+  floatBtn.addEventListener("click", () => {
+    openCustomerSupportModal();
+  });
+
+  document.getElementById("cust-send-btn").addEventListener("click", sendCustomerTextMessage);
+  document.getElementById("cust-chat-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") sendCustomerTextMessage();
+  });
+
+  // Voice recording buttons
+  document.getElementById("cust-voice-btn").addEventListener("click", startCustVoiceRecording);
+  document.getElementById("cust-cancel-voice-btn").addEventListener("click", cancelCustVoiceRecording);
+  document.getElementById("cust-send-voice-btn").addEventListener("click", sendCustVoiceRecording);
+
+  // Calling buttons
+  document.getElementById("cust-start-audio-btn").addEventListener("click", () => startCustCall("audio"));
+  document.getElementById("cust-start-video-btn").addEventListener("click", () => startCustCall("video"));
+  document.getElementById("cust-btn-hangup").addEventListener("click", endCustCall);
+
+  document.getElementById("cust-btn-mic").addEventListener("click", () => {
+    if (custLocalStream) {
+      const audioTrack = custLocalStream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        document.getElementById("cust-btn-mic").style.background = audioTrack.enabled ? "#334155" : "#ef4444";
+      }
+    }
+  });
+
+  document.getElementById("cust-btn-cam").addEventListener("click", () => {
+    if (custLocalStream) {
+      const videoTrack = custLocalStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        document.getElementById("cust-btn-cam").style.background = videoTrack.enabled ? "#334155" : "#ef4444";
+      }
+    }
+  });
+
+  // Background check for incoming call if customer is logged in or thread active
+  setInterval(async () => {
+    if (custSupportThread && !custCurrentCall) {
+      try {
+        const res = await fetch(`/api/support/call/active?thread_id=${custSupportThread.id}`);
+        const data = await res.json();
+        if (data.active && data.call && data.call.caller_role === "support" && data.call.status === "ringing") {
+          showCustIncomingCallBanner(data.call);
+        }
+      } catch(e) {}
+    }
+  }, 3000);
+}
+
+async function openCustomerSupportModal() {
+  const modal = document.getElementById("support-chat-modal");
+  modal.style.display = "flex";
+
+  // Create or retrieve support thread
+  const customerName = (state.customer && state.customer.name) || "Store Visitor";
+  const customerPhone = (state.customer && state.customer.phone) || "";
+
+  try {
+    const res = await fetch("/api/support/threads", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(state.token ? { "Authorization": "Bearer " + state.token } : {})
+      },
+      body: JSON.stringify({ name: customerName, phone: customerPhone })
+    });
+    const data = await res.json();
+    if (data.thread) {
+      custSupportThread = data.thread;
+      await loadCustomerMessages();
+
+      clearInterval(custSupportPollInterval);
+      custSupportPollInterval = setInterval(loadCustomerMessages, 2500);
+    }
+  } catch (err) {
+    console.error("Support thread error:", err);
+  }
+}
+
+async function loadCustomerMessages() {
+  if (!custSupportThread) return;
+  try {
+    const res = await fetch(`/api/support/threads/${custSupportThread.id}/messages`, {
+      headers: {
+        ...(state.token ? { "Authorization": "Bearer " + state.token } : {})
+      }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    renderCustomerMessages(data.messages || []);
+  } catch(e) {}
+}
+
+function renderCustomerMessages(messages) {
+  const container = document.getElementById("cust-chat-messages");
+  const wasAtBottom = container.scrollHeight - container.clientHeight <= container.scrollTop + 50;
+
+  container.innerHTML = messages.map(m => {
+    const isCustomer = m.sender_role === "customer";
+    let timeStr = "";
+    try {
+      timeStr = new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    } catch(e) {}
+
+    let bubbleContent = "";
+    if (m.message_type === "audio") {
+      bubbleContent = `
+        <div style="min-width: 180px;">
+          <audio controls style="width: 100%; height: 32px;" preload="metadata">
+            <source src="${m.content}" type="audio/webm">
+            <source src="${m.content}" type="audio/wav">
+            <source src="${m.content}" type="audio/mp4">
+          </audio>
+        </div>
+      `;
+    } else {
+      bubbleContent = escapeHtml(m.content);
+    }
+
+    return `
+      <div style="display: flex; flex-direction: column; align-self: ${isCustomer ? "flex-end" : "flex-start"}; max-width: 78%;">
+        <div style="background: ${isCustomer ? "#0f766e" : "white"}; color: ${isCustomer ? "white" : "#1e293b"}; padding: 8px 12px; border-radius: 12px; font-size: 0.875rem; border: ${isCustomer ? "none" : "1px solid #e2e8f0"}; box-shadow: 0 1px 3px rgba(0,0,0,0.05); word-break: break-word;">
+          ${bubbleContent}
+        </div>
+        <div style="font-size: 0.68rem; color: #94a3b8; margin-top: 2px; align-self: ${isCustomer ? "flex-end" : "flex-start"};">
+          ${m.sender_name || (isCustomer ? "You" : "Vipani Care")} • ${timeStr}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  if (wasAtBottom || container.children.length <= messages.length) {
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+async function sendCustomerTextMessage() {
+  if (!custSupportThread) return;
+  const input = document.getElementById("cust-chat-input");
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = "";
+
+  const customerName = (state.customer && state.customer.name) || "Customer";
+  try {
+    const res = await fetch(`/api/support/threads/${custSupportThread.id}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(state.token ? { "Authorization": "Bearer " + state.token } : {})
+      },
+      body: JSON.stringify({
+        message_type: "text",
+        content: text,
+        sender_role: "customer",
+        sender_name: customerName
+      })
+    });
+    if (res.ok) {
+      await loadCustomerMessages();
+    }
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+async function startCustVoiceRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    custAudioChunks = [];
+    custMediaRecorder = new MediaRecorder(stream);
+    custMediaRecorder.ondataavailable = e => {
+      if (e.data.size > 0) custAudioChunks.push(e.data);
+    };
+    custMediaRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+    };
+    custMediaRecorder.start();
+    custRecordStartTime = Date.now();
+
+    document.getElementById("cust-composer-text-mode").style.display = "none";
+    document.getElementById("cust-composer-voice-mode").style.display = "flex";
+
+    custRecordInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - custRecordStartTime) / 1000);
+      const mins = String(Math.floor(elapsed / 60)).padStart(2, "0");
+      const secs = String(elapsed % 60).padStart(2, "0");
+      document.getElementById("cust-rec-timer").textContent = `${mins}:${secs}`;
+    }, 500);
+
+  } catch(e) {
+    alert("മൈക്രോഫോൺ അനുമതി ആവശ്യമാണ്: " + e.message);
+  }
+}
+
+function cancelCustVoiceRecording() {
+  if (custMediaRecorder && custMediaRecorder.state !== "inactive") {
+    custMediaRecorder.stop();
+  }
+  clearInterval(custRecordInterval);
+  custAudioChunks = [];
+  document.getElementById("cust-composer-voice-mode").style.display = "none";
+  document.getElementById("cust-composer-text-mode").style.display = "flex";
+}
+
+async function sendCustVoiceRecording() {
+  if (!custMediaRecorder || custMediaRecorder.state === "inactive") return;
+  clearInterval(custRecordInterval);
+  const dur = Math.max(1, Math.round((Date.now() - custRecordStartTime) / 1000));
+
+  custMediaRecorder.onstop = async () => {
+    const blob = new Blob(custAudioChunks, { type: "audio/webm" });
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = async () => {
+      const base64Audio = reader.result;
+      try {
+        const uploadRes = await fetch("/api/support/upload-audio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ audio_data: base64Audio, format: "webm", duration: dur })
+        });
+        const uploadData = await uploadRes.json();
+        if (uploadData.success && uploadData.audio_url) {
+          const customerName = (state.customer && state.customer.name) || "Customer";
+          await fetch(`/api/support/threads/${custSupportThread.id}/messages`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(state.token ? { "Authorization": "Bearer " + state.token } : {})
+            },
+            body: JSON.stringify({
+              message_type: "audio",
+              content: uploadData.audio_url,
+              audio_duration: dur,
+              sender_role: "customer",
+              sender_name: customerName
+            })
+          });
+          await loadCustomerMessages();
+        }
+      } catch(err) {
+        console.error(err);
+      }
+    };
+  };
+
+  custMediaRecorder.stop();
+  document.getElementById("cust-composer-voice-mode").style.display = "none";
+  document.getElementById("cust-composer-text-mode").style.display = "flex";
+}
+
+// --- Customer Calling & WebRTC ---
+async function startCustCall(callType) {
+  if (!custSupportThread) return;
+  try {
+    custLocalStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: callType === "video"
+    });
+
+    setupCustCallUI(callType);
+
+    custPeerConnection = new RTCPeerConnection(custRtcConfig);
+    custLocalStream.getTracks().forEach(t => custPeerConnection.addTrack(t, custLocalStream));
+
+    custPeerConnection.ontrack = e => {
+      const rv = document.getElementById("cust-remote-video");
+      if (rv) rv.srcObject = e.streams[0];
+    };
+
+    const offer = await custPeerConnection.createOffer();
+    await custPeerConnection.setLocalDescription(offer);
+
+    const customerName = (state.customer && state.customer.name) || "Customer";
+    const res = await fetch("/api/support/call/start", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(state.token ? { "Authorization": "Bearer " + state.token } : {})
+      },
+      body: JSON.stringify({
+        thread_id: custSupportThread.id,
+        call_type: callType,
+        caller_role: "customer",
+        caller_name: customerName,
+        offer_sdp: offer
+      })
+    });
+    const callData = await res.json();
+    custCurrentCall = callData;
+
+    custPeerConnection.onicecandidate = e => {
+      if (e.candidate) {
+        fetch("/api/support/call/ice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            call_id: custCurrentCall.call_id,
+            candidate: e.candidate,
+            sender_role: "customer"
+          })
+        });
+      }
+    };
+
+    startCustCallStatusPolling();
+
+  } catch(e) {
+    alert("കോൾ ആരംഭിക്കാൻ സാധിച്ചില്ല: " + e.message);
+    cleanupCustCall();
+  }
+}
+
+function setupCustCallUI(callType) {
+  document.getElementById("cust-call-modal").style.display = "flex";
+  const isVideo = callType === "video";
+  const rv = document.getElementById("cust-remote-video");
+  const lv = document.getElementById("cust-local-video");
+  const avatarBox = document.getElementById("cust-audio-avatar-box");
+
+  if (isVideo) {
+    avatarBox.style.display = "none";
+    rv.style.display = "block";
+    lv.style.display = "block";
+    lv.srcObject = custLocalStream;
+  } else {
+    rv.style.display = "none";
+    lv.style.display = "none";
+    avatarBox.style.display = "flex";
+  }
+
+  let s = 0;
+  clearInterval(custCallTimerInterval);
+  custCallTimerInterval = setInterval(() => {
+    s++;
+    const mins = String(Math.floor(s / 60)).padStart(2, "0");
+    const secs = String(s % 60).padStart(2, "0");
+    document.getElementById("cust-call-timer").textContent = `${mins}:${secs}`;
+  }, 1000);
+}
+
+function startCustCallStatusPolling() {
+  clearInterval(custCallPollInterval);
+  custCallPollInterval = setInterval(async () => {
+    if (!custCurrentCall) return;
+    try {
+      const res = await fetch(`/api/support/call/${custCurrentCall.call_id}/status`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const call = data.call;
+
+      if (call.status === "ended" || call.status === "declined") {
+        alert("കോൾ അവസാനിച്ചു (Call ended)");
+        cleanupCustCall();
+        return;
+      }
+
+      if (call.status === "connected" && call.answer_sdp && custPeerConnection && !custPeerConnection.currentRemoteDescription) {
+        let answerObj = typeof call.answer_sdp === "string" ? JSON.parse(call.answer_sdp) : call.answer_sdp;
+        if (answerObj && answerObj.sdp) {
+          await custPeerConnection.setRemoteDescription(new RTCSessionDescription(answerObj));
+        }
+      }
+
+      if (call.ice_candidates && custPeerConnection) {
+        let list = [];
+        try { list = JSON.parse(call.ice_candidates); } catch(e) {}
+        for (const c of list) {
+          if (c.sender_role === "support" && c.candidate) {
+            try {
+              await custPeerConnection.addIceCandidate(new RTCIceCandidate(c.candidate));
+            } catch(e) {}
+          }
+        }
+      }
+    } catch(e) {}
+  }, 1500);
+}
+
+function showCustIncomingCallBanner(call) {
+  const banner = document.getElementById("cust-incoming-call-banner");
+  if (banner.style.display === "flex") return;
+  banner.style.display = "flex";
+
+  document.getElementById("cust-btn-accept").onclick = () => answerCustIncomingCall(call);
+  document.getElementById("cust-btn-decline").onclick = async () => {
+    banner.style.display = "none";
+    try {
+      await fetch("/api/support/call/end", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ call_id: call.id, status: "declined" })
+      });
+    } catch(e) {}
+  };
+}
+
+async function answerCustIncomingCall(call) {
+  custCurrentCall = { call_id: call.id, ...call };
+  document.getElementById("cust-incoming-call-banner").style.display = "none";
+
+  try {
+    custLocalStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: call.call_type === "video"
+    });
+
+    setupCustCallUI(call.call_type);
+
+    custPeerConnection = new RTCPeerConnection(custRtcConfig);
+    custLocalStream.getTracks().forEach(t => custPeerConnection.addTrack(t, custLocalStream));
+
+    custPeerConnection.ontrack = e => {
+      const rv = document.getElementById("cust-remote-video");
+      if (rv) rv.srcObject = e.streams[0];
+    };
+
+    custPeerConnection.onicecandidate = e => {
+      if (e.candidate) {
+        fetch("/api/support/call/ice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            call_id: custCurrentCall.call_id,
+            candidate: e.candidate,
+            sender_role: "customer"
+          })
+        });
+      }
+    };
+
+    if (call.offer_sdp) {
+      let offerObj = typeof call.offer_sdp === "string" ? JSON.parse(call.offer_sdp) : call.offer_sdp;
+      await custPeerConnection.setRemoteDescription(new RTCSessionDescription(offerObj));
+      const answer = await custPeerConnection.createAnswer();
+      await custPeerConnection.setLocalDescription(answer);
+
+      await fetch("/api/support/call/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          call_id: custCurrentCall.call_id,
+          answer_sdp: answer
+        })
+      });
+    }
+
+    startCustCallStatusPolling();
+
+  } catch(e) {
+    alert("ഇൻകമിംഗ് കോൾ കണക്ട് ചെയ്യാൻ സാധിച്ചില്ല: " + e.message);
+    cleanupCustCall();
+  }
+}
+
+async function endCustCall() {
+  if (custCurrentCall) {
+    try {
+      await fetch("/api/support/call/end", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ call_id: custCurrentCall.call_id, status: "ended" })
+      });
+    } catch(e) {}
+  }
+  cleanupCustCall();
+}
+
+function cleanupCustCall() {
+  clearInterval(custCallPollInterval);
+  clearInterval(custCallTimerInterval);
+  if (custLocalStream) {
+    custLocalStream.getTracks().forEach(t => t.stop());
+    custLocalStream = null;
+  }
+  if (custPeerConnection) {
+    custPeerConnection.close();
+    custPeerConnection = null;
+  }
+  custCurrentCall = null;
+  document.getElementById("cust-call-modal").style.display = "none";
+  document.getElementById("cust-incoming-call-banner").style.display = "none";
+}
+

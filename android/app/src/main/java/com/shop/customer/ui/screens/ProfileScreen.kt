@@ -17,6 +17,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.ChevronRight
 import com.shop.customer.data.local.Localization
 import com.shop.customer.data.local.PreferencesManager
 import com.shop.customer.data.remote.ApiService
@@ -29,6 +31,7 @@ fun ProfileScreen(
     prefManager: PreferencesManager,
     language: String = "en",
     onLanguageChange: (String) -> Unit = {},
+    onNavigateToSupport: () -> Unit = {},
     onLogout: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -106,6 +109,53 @@ fun ProfileScreen(
                             color = EmeraldForest
                         )
                     }
+                }
+            }
+        }
+
+        // Customer Care Support Card
+        item {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                border = CardDefaults.outlinedCardBorder().copy(brush = SolidColor(AppBorder)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToSupport() }
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                            .background(EmeraldPrimary.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("🎧", fontSize = 22.sp)
+                    }
+                    Spacer(Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = Localization.get("customer_care", language),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = Localization.get("support_subtitle", language),
+                            fontSize = 12.sp,
+                            color = TextSecondary,
+                            maxLines = 2
+                        )
+                    }
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = EmeraldForest
+                    )
                 }
             }
         }

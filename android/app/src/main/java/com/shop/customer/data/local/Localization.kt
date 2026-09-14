@@ -96,7 +96,19 @@ object Localization {
         "name_label" to ("Your Name" to "പേര് (Name)"),
         "verify_login" to ("Verify & Login" to "സ്ഥിരീകരിച്ച് ലോഗിൻ ചെയ്യുക"),
         "verifying" to ("Verifying..." to "സ്ഥിരീകരിക്കുന്നു..."),
-        "change_number" to ("Change Number" to "നമ്പർ മാറ്റുക")
+        "change_number" to ("Change Number" to "നമ്പർ മാറ്റുക"),
+
+        // Support Care
+        "support_title" to ("Customer Support" to "കസ്റ്റമർ കെയർ (Support)"),
+        "customer_care" to ("24x7 Customer Care" to "24x7 കസ്റ്റമർ കെയർ സപ്പോർട്ട്"),
+        "support_subtitle" to ("Chat, voice note, or call our support team" to "സപ്പോർട്ട് എക്സിക്യൂട്ടീവുമായി ചാറ്റ് ചെയ്യാനും വിളിക്കാനും ഇവിടെ ക്ലിക്ക് ചെയ്യുക"),
+        "type_message" to ("Type a message..." to "സന്ദേശം ടൈപ്പ് ചെയ്യുക..."),
+        "record_voice" to ("Voice Note" to "വോയ്‌സ് നോട്ട്"),
+        "audio_call" to ("Audio Call" to "ഓഡിയോ കോൾ"),
+        "video_call" to ("Video Call" to "വീഡിയോ കോൾ"),
+        "incoming_call" to ("Incoming Call!" to "ഇൻകമിംഗ് കോൾ!"),
+        "call_connected" to ("Call Connected" to "കോൾ കണക്റ്റ് ചെയ്തു"),
+        "end_call" to ("End Call" to "കോൾ അവസാനിപ്പിക്കുക")
     )
 
     fun get(key: String, lang: String = "en"): String {

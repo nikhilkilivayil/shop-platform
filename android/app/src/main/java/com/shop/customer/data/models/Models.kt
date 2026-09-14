@@ -93,3 +93,36 @@ data class VerifyOtpResponse(
     val user: User?,
     val message: String?
 )
+
+data class SupportThread(
+    val id: Int,
+    val userId: Int? = null,
+    val customerName: String,
+    val customerPhone: String,
+    val status: String,
+    val createdAt: String? = null,
+    val updatedAt: String? = null
+)
+
+data class SupportMessage(
+    val id: Int,
+    val threadId: Int,
+    val senderRole: String,
+    val senderId: Int? = null,
+    val senderName: String,
+    val messageType: String,
+    val content: String,
+    val audioDuration: Double = 0.0,
+    val isRead: Int = 0,
+    val createdAt: String? = null
+)
+
+data class SupportCallSession(
+    val id: String,
+    val threadId: Int,
+    val callerRole: String,
+    val callerName: String,
+    val callType: String,
+    val status: String
+)
+

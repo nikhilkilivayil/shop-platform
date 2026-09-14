@@ -12,6 +12,7 @@ public struct ProfileView: View {
     @State private var message: String? = nil
     @State private var serverUrl: String = APIService.shared.baseURL
     @State private var serverSavedMessage: String? = nil
+    @State private var showSupportSheet: Bool = false
 
     public init() {}
 
@@ -20,6 +21,8 @@ public struct ProfileView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     profileHeaderCard
+
+                    customerCareCard
 
                     languageSelectorCard
 
@@ -35,6 +38,9 @@ public struct ProfileView: View {
             }
             .background(ShopTheme.background)
             .navigationTitle(lang.t("profile_title"))
+            .sheet(isPresented: $showSupportSheet) {
+                SupportChatView()
+            }
             .onAppear {
                 serverUrl = APIService.shared.baseURL
                 if let u = auth.currentUser {
@@ -90,6 +96,46 @@ public struct ProfileView: View {
                 .stroke(ShopTheme.cardBorder, lineWidth: 1)
         )
         .padding(.horizontal)
+    }
+
+    @ViewBuilder
+    private var customerCareCard: some View {
+        Button(action: { showSupportSheet = true }) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(ShopTheme.primary.opacity(0.15))
+                        .frame(width: 48, height: 48)
+                    Text("🎧")
+                        .font(.system(size: 24))
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(lang.t("customer_care"))
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(ShopTheme.textPrimary)
+                    Text(lang.t("support_subtitle"))
+                        .font(.system(size: 12))
+                        .foregroundColor(ShopTheme.textSecondary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(ShopTheme.primaryForest)
+            }
+            .padding(16)
+            .background(ShopTheme.surface)
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(ShopTheme.cardBorder, lineWidth: 1)
+            )
+            .padding(.horizontal)
+        }
     }
 
     @ViewBuilder

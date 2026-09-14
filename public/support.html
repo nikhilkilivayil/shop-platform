@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>വിപണി കസ്റ്റമർ കെയർ - Support Executive Console</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root {
+      --support-primary: #0f766e;
+      --support-accent: #14b8a6;
+      --support-bg: #f8fafc;
+      --bubble-customer: #f1f5f9;
+      --bubble-support: #0f766e;
+    }
+    body {
+      background: var(--support-bg);
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sup-header {
+      background: #042f2e;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      z-index: 10;
+    }
+    .sup-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .sup-logo {
+      font-size: 1.8rem;
+    }
+    .sup-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .sup-badge {
+      background: #14b8a6;
+      color: #042f2e;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+    .sup-agent-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .agent-pill {
+      background: rgba(255,255,255,0.1);
+      padding: 0.4rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .online-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    /* Main Console Layout */
+    .sup-main {
+      flex: 1;
+      display: flex;
+      height: calc(100vh - 60px);
+      overflow: hidden;
+    }
+
+    /* Left Sidebar: Threads */
+    .sup-threads-panel {
+      width: 340px;
+      background: white;
+      border-right: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .sup-threads-header {
+      padding: 1rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .search-thread-input {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .threads-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .thread-item {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      transition: background 0.15s ease;
+    }
+    .thread-item:hover {
+      background: #f8fafc;
+    }
+    .thread-item.active {
+      background: #f0fdf4;
+      border-left: 4px solid #0f766e;
+    }
+    .thread-avatar {
+      width: 44px;
+      height: 44px;
+      background: #ccfbf1;
+      color: #0f766e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .thread-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .thread-top {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+    .thread-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .thread-time {
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+    .thread-snippet {
+      font-size: 0.8rem;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .thread-unread-badge {
+      background: #ef4444;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 999px;
+      margin-left: 4px;
+    }
+
+    /* Right: Chat Panel */
+    .sup-chat-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #f8fafc;
+      position: relative;
+    }
+    .chat-header {
+      background: white;
+      padding: 0.75rem 1.5rem;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-user-details {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .chat-user-avatar {
+      width: 40px;
+      height: 40px;
+      background: #0f766e;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    .chat-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn-call {
+      background: white;
+      border: 1.5px solid #0f766e;
+      color: #0f766e;
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.2s ease;
+    }
+    .btn-call:hover {
+      background: #0f766e;
+      color: white;
+    }
+    .btn-call.video-call {
+      border-color: #0284c7;
+      color: #0284c7;
+    }
+    .btn-call.video-call:hover {
+      background: #0284c7;
+      color: white;
+    }
+
+    /* Messages Stream */
+    .chat-messages {
+      flex: 1;
+      padding: 1.25rem 2rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .msg-row {
+      display: flex;
+      flex-direction: column;
+      max-width: 68%;
+    }
+    .msg-row.customer {
+      align-self: flex-start;
+    }
+    .msg-row.support {
+      align-self: flex-end;
+    }
+    .msg-bubble {
+      padding: 0.75rem 1rem;
+      border-radius: 14px;
+      font-size: 0.925rem;
+      line-height: 1.4;
+      word-break: break-word;
+      position: relative;
+    }
+    .msg-row.customer .msg-bubble {
+      background: white;
+      color: #1e293b;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #e2e8f0;
+    }
+    .msg-row.support .msg-bubble {
+      background: #0f766e;
+      color: white;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 2px 6px rgba(15,118,110,0.25);
+    }
+    .msg-meta {
+      font-size: 0.7rem;
+      margin-top: 4px;
+      color: #94a3b8;
+      display: flex;
+      gap: 4px;
+    }
+    .msg-row.support .msg-meta {
+      justify-content: flex-end;
+    }
+
+    /* Audio message styling */
+    .audio-player-box {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 230px;
+    }
+    .audio-player-box audio {
+      height: 36px;
+      width: 100%;
+    }
+
+    /* Input Box & Voice Recorder */
+    .chat-composer {
+      background: white;
+      padding: 0.85rem 1.5rem;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .chat-input {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 24px;
+      font-size: 0.925rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    .chat-input:focus {
+      border-color: #0f766e;
+    }
+    .btn-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: #0f766e;
+      color: white;
+      font-size: 1.15rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .btn-circle:hover {
+      transform: scale(1.05);
+    }
+    .btn-circle.btn-mic {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .btn-circle.btn-mic.recording {
+      background: #ef4444;
+      color: white;
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .recording-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+      background: #fee2e2;
+      padding: 0.6rem 1rem;
+      border-radius: 24px;
+      color: #991b1b;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    /* Incoming Call Banner Alert */
+    .incoming-call-alert {
+      position: absolute;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #042f2e;
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      z-index: 1000;
+      border: 2px solid #14b8a6;
+      animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+      from { transform: translate(-50%, -30px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+
+    /* In-Call Modal */
+    .call-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .call-window {
+      background: #0f172a;
+      width: 90%;
+      max-width: 800px;
+      height: 540px;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      border: 1px solid #334155;
+      position: relative;
+    }
+    .call-streams {
+      flex: 1;
+      position: relative;
+      background: #020617;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .remote-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .local-video {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      width: 160px;
+      height: 120px;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 2px solid white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      background: #1e293b;
+    }
+    .call-audio-avatar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: white;
+      gap: 1rem;
+    }
+    .avatar-ring {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: #0f766e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      animation: pulseRing 1.5s infinite;
+    }
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.7); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(20, 184, 166, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
+    }
+    .call-controls {
+      background: #0f172a;
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+      gap: 1.25rem;
+      align-items: center;
+    }
+    .btn-call-action {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      transition: transform 0.15s ease;
+    }
+    .btn-call-action:hover {
+      transform: scale(1.08);
+    }
+    .btn-mute {
+      background: #334155;
+    }
+    .btn-mute.active {
+      background: #ef4444;
+    }
+    .btn-video-toggle {
+      background: #334155;
+    }
+    .btn-hangup {
+      background: #ef4444;
+      width: 60px;
+      height: 60px;
+      font-size: 1.5rem;
+    }
+    .call-timer {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      font-weight: 600;
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: rgba(0,0,0,0.5);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header class="sup-header">
+    <div class="sup-brand">
+      <span class="sup-logo">🛒</span>
+      <div>
+        <div class="sup-title">വിപണി കസ്റ്റമർ കെയർ (Customer Care Portal)</div>
+        <div style="font-size: 0.75rem; color: #99f6e4;">Vipani Support Executive Console</div>
+      </div>
+      <span class="sup-badge">LIVE AGENT</span>
+    </div>
+
+    <div class="sup-agent-info">
+      <div class="agent-pill">
+        <span class="online-dot"></span>
+        <span id="agent-display-name">കസ്റ്റമർ കെയർ എക്സിക്യൂട്ടീവ്</span>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="window.location.href=/" style="border-color: #14b8a6; color: white;">
+        🏪 സ്റ്റോർ കാണുക
+      </button>
+      <button class="btn btn-danger btn-sm" id="sup-logout-btn">
+        🚪 ലോഗൗട്ട്
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Work Area -->
+  <div class="sup-main">
+    
+    <!-- Left Sidebar: Customer Threads -->
+    <aside class="sup-threads-panel">
+      <div class="sup-threads-header">
+        <input type="text" id="thread-search" class="search-thread-input" placeholder="കസ്റ്റമർ പേര് / ഫോൺ തിരയുക...">
+      </div>
+      <div class="threads-list" id="threads-container">
+        <div style="padding: 2rem; text-align: center; color: #94a3b8; font-size: 0.9rem;">
+          ലോഡ് ചെയ്യുന്നു... (Loading customer chats...)
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right: Chat Area -->
+    <section class="sup-chat-panel" id="chat-section">
+      
+      <!-- Empty state when no thread selected -->
+      <div id="no-chat-selected" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #94a3b8;">
+        <div style="font-size: 3.5rem; margin-bottom: 1rem;">💬</div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: #334155;">ഒരു കസ്റ്റമർ ചാറ്റ് തിരഞ്ഞെടുക്കുക</h3>
+        <p style="font-size: 0.9rem;">ഇടതുവശത്തെ ലിസ്റ്റിൽ നിന്ന് ഉപഭോക്താവിനെ തിരഞ്ഞെടുത്തു ചാറ്റും കോളും ആരംഭിക്കുക.</p>
+      </div>
+
+      <!-- Active Chat Interface -->
+      <div id="active-chat-wrap" style="display: none; height: 100%; flex-direction: column;">
+        
+        <!-- Chat Header -->
+        <div class="chat-header">
+          <div class="chat-user-details">
+            <div class="chat-user-avatar" id="active-user-avatar">C</div>
+            <div>
+              <div style="font-weight: 800; font-size: 1.05rem; color: #0f172a;" id="active-user-name">Customer</div>
+              <div style="font-size: 0.8rem; color: #64748b;" id="active-user-phone">📞 +91 98470 12345</div>
+            </div>
+          </div>
+          <div class="chat-actions">
+            <button class="btn-call" id="start-audio-call-btn">
+              📞 ഓഡിയോ കോൾ (Audio Call)
+            </button>
+            <button class="btn-call video-call" id="start-video-call-btn">
+              📹 വീഡിയോ കോൾ (Video Call)
+            </button>
+            <button class="btn btn-secondary btn-sm" id="refresh-chat-btn" title="Refresh messages">
+              🔄
+            </button>
+          </div>
+        </div>
+
+        <!-- Messages Feed -->
+        <div class="chat-messages" id="messages-feed">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Composer & Voice Recorder -->
+        <div class="chat-composer">
+          <!-- Default text input mode -->
+          <div id="text-composer-mode" style="display: flex; flex: 1; gap: 0.75rem; align-items: center;">
+            <input type="text" id="chat-msg-input" class="chat-input" placeholder="സന്ദേശം ടൈപ്പ് ചെയ്യുക... (Type message)..." autocomplete="off">
+            
+            <!-- Voice Record Button -->
+            <button class="btn-circle btn-mic" id="voice-record-btn" title="Hold/Click to record voice note">
+              🎙️
+            </button>
+
+            <!-- Send Button -->
+            <button class="btn-circle" id="chat-send-btn" title="Send message">
+              ➤
+            </button>
+          </div>
+
+          <!-- Active voice recording mode -->
+          <div id="voice-recording-mode" class="recording-banner" style="display: none;">
+            <span>🔴 റെക്കോർഡ് ചെയ്യുന്നു: <b id="recording-timer">00:00</b></span>
+            <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+              <button class="btn btn-secondary btn-sm" id="cancel-voice-btn" style="background: white;">✕ റദ്ദാക്കുക</button>
+              <button class="btn btn-primary btn-sm" id="send-voice-btn" style="background: #0f766e;">📤 അയക്കുക</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- Incoming Call Alert Banner -->
+  <div id="incoming-call-banner" class="incoming-call-alert" style="display: none;">
+    <div style="font-size: 2rem;" id="incoming-call-icon">📞</div>
+    <div>
+      <div style="font-weight: 800; font-size: 1rem;" id="incoming-caller-title">ഇൻകമിംഗ് കോൾ!</div>
+      <div style="font-size: 0.825rem; color: #99f6e4;" id="incoming-caller-sub">ഉപഭോക്താവ് വിളിക്കുന്നു...</div>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <button class="btn btn-danger btn-sm" id="btn-decline-call" style="padding: 0.5rem 1rem;">
+        ✕ നിരസിക്കുക
+      </button>
+      <button class="btn btn-primary btn-sm" id="btn-accept-call" style="padding: 0.5rem 1rem; background: #22c55e;">
+        ✓ സ്വീകരിക്കുക (Answer)
+      </button>
+    </div>
+  </div>
+
+  <!-- In-Call Modal Window -->
+  <div id="call-modal" class="call-modal-overlay" style="display: none;">
+    <div class="call-window">
+      <div class="call-timer" id="call-active-timer">00:00</div>
+      
+      <!-- Video / Audio Streams -->
+      <div class="call-streams">
+        <!-- Remote Video -->
+        <video id="remote-video" class="remote-video" autoplay playsinline></video>
+        <!-- Local Preview Video -->
+        <video id="local-video" class="local-video" autoplay playsinline muted></video>
+
+        <!-- Audio Avatar placeholder when audio-only -->
+        <div id="audio-call-placeholder" class="call-audio-avatar" style="display: none;">
+          <div class="avatar-ring">🎙️</div>
+          <div style="font-weight: 800; font-size: 1.25rem;" id="call-participant-name">Customer</div>
+          <div style="font-size: 0.85rem; color: #94a3b8;">ഓഡിയോ കോൾ സജീവമാണ് (Audio Call Connected)</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="call-controls">
+        <button class="btn-call-action btn-mute" id="btn-toggle-mic" title="Mute/Unmute Mic">
+          🎤
+        </button>
+        <button class="btn-call-action btn-video-toggle" id="btn-toggle-cam" title="Turn Camera On/Off">
+          📹
+        </button>
+        <button class="btn-call-action btn-hangup" id="btn-end-call" title="End Call">
+          📞
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Chimes for Incoming Call -->
+  <audio id="ringtone-audio" loop preload="auto" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"></audio>
+
+  <script src="support.js"></script>
+</body>
+</html>

@@ -46,6 +46,11 @@
           ⚙️ <span id="admin-btn-label">അഡ്മിൻ</span>
         </button>
 
+        <!-- Support Executive Portal Link -->
+        <button id="nav-support-btn" class="btn btn-secondary btn-sm" onclick="window.location.href='/support.html'" style="border-color: #0d9488; color: #0f766e;">
+          🎧 <span>സപ്പോർട്ട് (Care)</span>
+        </button>
+
         <!-- Cart Button -->
         <button id="nav-cart-btn" class="btn btn-primary cart-btn">
           🛒 <span data-i18n="cart">കാർട്ട്</span>
@@ -871,6 +876,96 @@
           <button type="submit" class="btn btn-primary" id="pf-save-btn">💾 സേവ് ചെയ്യുക</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Floating Customer Support Trigger Button -->
+  <div id="floating-support-btn" style="position: fixed; bottom: 25px; right: 25px; background: #0f766e; color: white; border-radius: 999px; padding: 12px 22px; box-shadow: 0 8px 24px rgba(15,118,110,0.4); cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 700; z-index: 998; font-size: 0.95rem; border: 2px solid white;">
+    <span style="font-size: 1.3rem;">🎧</span>
+    <span id="floating-support-label">സഹായം (Live Support)</span>
+  </div>
+
+  <!-- Customer Support Chat Modal / Sheet -->
+  <div class="modal-overlay" id="support-chat-modal" style="display: none; align-items: flex-end; justify-content: flex-end; padding: 1.5rem;">
+    <div class="modal-content" style="max-width: 440px; width: 100%; height: 560px; display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: 18px; box-shadow: 0 15px 40px rgba(0,0,0,0.3);">
+      
+      <!-- Support Header -->
+      <div style="background: #042f2e; color: white; padding: 0.85rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 0.65rem;">
+          <div style="width: 38px; height: 38px; border-radius: 50%; background: #0f766e; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">🎧</div>
+          <div>
+            <div style="font-weight: 800; font-size: 1rem;">വിപണി സപ്പോർട്ട് (Vipani Care)</div>
+            <div style="font-size: 0.725rem; color: #99f6e4; display: flex; align-items: center; gap: 5px;">
+              <span style="width: 7px; height: 7px; background: #22c55e; border-radius: 50%; display: inline-block;"></span>
+              സപ്പോർട്ട് എക്സിക്യൂട്ടീവ് ഓൺലൈൻ
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.35rem; align-items: center;">
+          <button id="cust-start-audio-btn" style="background: rgba(255,255,255,0.15); border: none; color: white; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem;" title="Audio Call">📞</button>
+          <button id="cust-start-video-btn" style="background: rgba(255,255,255,0.15); border: none; color: white; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.85rem;" title="Video Call">📹</button>
+          <button onclick="closeModal('support-chat-modal')" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; margin-left: 4px;">&times;</button>
+        </div>
+      </div>
+
+      <!-- Messages Stream -->
+      <div id="cust-chat-messages" style="flex: 1; padding: 1rem; overflow-y: auto; background: #f8fafc; display: flex; flex-direction: column; gap: 0.75rem;">
+        <!-- Dynamic message items -->
+      </div>
+
+      <!-- Support Composer -->
+      <div style="background: white; padding: 0.75rem 1rem; border-top: 1px solid #e2e8f0; display: flex; align-items: center; gap: 0.5rem;">
+        <!-- Text composer mode -->
+        <div id="cust-composer-text-mode" style="display: flex; flex: 1; gap: 0.5rem; align-items: center;">
+          <input type="text" id="cust-chat-input" class="form-input" style="border-radius: 20px; padding: 0.55rem 0.9rem; font-size: 0.9rem;" placeholder="സന്ദേശം ടൈപ്പ് ചെയ്യുക...">
+          <button id="cust-voice-btn" style="width: 38px; height: 38px; border-radius: 50%; border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center;" title="Voice Note">🎙️</button>
+          <button id="cust-send-btn" class="btn btn-primary" style="border-radius: 50%; width: 38px; height: 38px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">➤</button>
+        </div>
+
+        <!-- Voice recording active mode -->
+        <div id="cust-composer-voice-mode" style="display: none; flex: 1; background: #fee2e2; padding: 0.5rem 0.85rem; border-radius: 20px; align-items: center; justify-content: space-between;">
+          <span style="color: #991b1b; font-size: 0.8rem; font-weight: 700;">🔴 <span id="cust-rec-timer">00:00</span></span>
+          <div style="display: flex; gap: 0.35rem;">
+            <button id="cust-cancel-voice-btn" style="background: white; border: 1px solid #f87171; color: #991b1b; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; cursor: pointer;">✕</button>
+            <button id="cust-send-voice-btn" style="background: #0f766e; border: none; color: white; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer;">📤 അയക്കുക</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Customer In-Call Modal -->
+  <div id="cust-call-modal" class="modal-overlay" style="display: none; z-index: 2100;">
+    <div style="background: #0f172a; width: 92%; max-width: 600px; height: 460px; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; position: relative; box-shadow: 0 25px 60px rgba(0,0,0,0.6);">
+      <div style="position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; z-index: 10;" id="cust-call-timer">00:00</div>
+      <div style="flex: 1; background: #020617; position: relative; display: flex; align-items: center; justify-content: center;">
+        <video id="cust-remote-video" style="width: 100%; height: 100%; object-fit: cover;" autoplay playsinline></video>
+        <video id="cust-local-video" style="position: absolute; bottom: 12px; right: 12px; width: 120px; height: 90px; border-radius: 10px; border: 2px solid white; object-fit: cover;" autoplay playsinline muted></video>
+        <div id="cust-audio-avatar-box" style="display: none; flex-direction: column; align-items: center; gap: 0.85rem; color: white;">
+          <div style="width: 80px; height: 80px; border-radius: 50%; background: #0f766e; display: flex; align-items: center; justify-content: center; font-size: 2.5rem;">🎧</div>
+          <div style="font-weight: 800; font-size: 1.15rem;">വിപണി സപ്പോർട്ട് എക്സിക്യൂട്ടീവ്</div>
+          <div style="font-size: 0.8rem; color: #94a3b8;">ഓഡിയോ കോൾ കണക്റ്റ് ചെയ്തിരിക്കുന്നു</div>
+        </div>
+      </div>
+      <div style="background: #0f172a; padding: 1rem; display: flex; justify-content: center; gap: 1rem; align-items: center;">
+        <button id="cust-btn-mic" style="width: 44px; height: 44px; border-radius: 50%; border: none; background: #334155; color: white; font-size: 1.2rem; cursor: pointer;">🎤</button>
+        <button id="cust-btn-cam" style="width: 44px; height: 44px; border-radius: 50%; border: none; background: #334155; color: white; font-size: 1.2rem; cursor: pointer;">📹</button>
+        <button id="cust-btn-hangup" style="width: 52px; height: 52px; border-radius: 50%; border: none; background: #ef4444; color: white; font-size: 1.4rem; cursor: pointer;">📞</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Incoming Call Notification Banner -->
+  <div id="cust-incoming-call-banner" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #042f2e; color: white; padding: 1rem 1.5rem; border-radius: 16px; border: 2px solid #14b8a6; box-shadow: 0 10px 30px rgba(0,0,0,0.35); display: none; align-items: center; gap: 1rem; z-index: 2200;">
+    <span style="font-size: 1.8rem;">📞</span>
+    <div>
+      <div style="font-weight: 800; font-size: 0.95rem;">സപ്പോർട്ട് എക്സിക്യൂട്ടീവ് വിളിക്കുന്നു!</div>
+      <div style="font-size: 0.8rem; color: #99f6e4;">Vipani Support Executive is calling you...</div>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <button id="cust-btn-decline" class="btn btn-danger btn-sm">നിരസിക്കുക</button>
+      <button id="cust-btn-accept" class="btn btn-primary btn-sm" style="background: #22c55e;">സ്വീകരിക്കുക (Answer)</button>
     </div>
   </div>
 

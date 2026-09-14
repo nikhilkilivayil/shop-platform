@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -30,7 +31,8 @@ enum class Screen(val key: String, val icon: ImageVector) {
     CART("tab_cart", Icons.Default.ShoppingCart),
     ORDERS("tab_orders", Icons.Default.ShoppingBag),
     PROFILE("tab_profile", Icons.Default.Person),
-    CHECKOUT("checkout_title", Icons.Default.ShoppingCart)
+    CHECKOUT("checkout_title", Icons.Default.ShoppingCart),
+    SUPPORT("support_title", Icons.Default.Headphones)
 }
 
 class MainActivity : ComponentActivity() {
@@ -52,9 +54,9 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
-                        if (currentScreen != Screen.CHECKOUT) {
+                        if (currentScreen != Screen.CHECKOUT && currentScreen != Screen.SUPPORT) {
                             NavigationBar {
-                                Screen.values().filter { it != Screen.CHECKOUT }.forEach { screen ->
+                                Screen.values().filter { it != Screen.CHECKOUT && it != Screen.SUPPORT }.forEach { screen ->
                                     val selected = currentScreen == screen
                                     val title = Localization.get(screen.key, currentLanguage)
                                     NavigationBarItem(
@@ -186,6 +188,9 @@ class MainActivity : ComponentActivity() {
                                             currentLanguage = newLang
                                             prefManager.setLanguage(newLang)
                                         },
+                                        onNavigateToSupport = {
+                                            currentScreen = Screen.SUPPORT
+                                        },
                                         onLogout = {
                                             isLoggedIn = false
                                         }
@@ -202,6 +207,15 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             }
+
+                            Screen.SUPPORT -> SupportScreen(
+                                apiService = apiService,
+                                prefManager = prefManager,
+                                language = currentLanguage,
+                                onBack = {
+                                    currentScreen = Screen.PROFILE
+                                }
+                            )
                         }
                     }
                 }

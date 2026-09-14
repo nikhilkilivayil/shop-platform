@@ -263,3 +263,58 @@ public struct OrderCreateResponse: Codable, Sendable {
     public let order: Order
     public let message: String?
 }
+
+public struct SupportThread: Identifiable, Codable, Hashable, Sendable {
+    public let id: Int
+    public let user_id: Int?
+    public let customer_name: String
+    public let customer_phone: String
+    public let status: String
+    public let created_at: String?
+    public let updated_at: String?
+}
+
+public struct SupportMessage: Identifiable, Codable, Hashable, Sendable {
+    public let id: Int
+    public let thread_id: Int
+    public let sender_role: String
+    public let sender_id: Int?
+    public let sender_name: String
+    public let message_type: String
+    public let content: String
+    public let audio_duration: Double?
+    public let is_read: Int?
+    public let created_at: String?
+}
+
+public struct SupportCallSession: Identifiable, Codable, Hashable, Sendable {
+    public let id: String
+    public let thread_id: Int
+    public let caller_role: String
+    public let caller_name: String
+    public let call_type: String
+    public let status: String
+}
+
+public struct SupportThreadResponse: Codable, Sendable {
+    public let success: Bool
+    public let thread: SupportThread
+}
+
+public struct SupportMessagesResponse: Codable, Sendable {
+    public let success: Bool
+    public let thread: SupportThread?
+    public let messages: [SupportMessage]
+}
+
+public struct SupportAudioUploadResponse: Codable, Sendable {
+    public let success: Bool
+    public let audio_url: String
+    public let duration: Double?
+}
+
+public struct SupportActiveCallResponse: Codable, Sendable {
+    public let active: Bool
+    public let call: SupportCallSession?
+}
+

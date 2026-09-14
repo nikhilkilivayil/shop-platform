@@ -158,6 +158,22 @@ public struct Localization {
         "step_shipped": Entry(en: "Out for Delivery", ml: "ഡെലിവറിക്ക് ഇറങ്ങി"),
         "step_shipped_desc": Entry(en: "Driver on the way", ml: "ഡെലിവറി ബോയ് വഴിയിലാണ്"),
         "step_delivered": Entry(en: "Delivered", ml: "ഡെലിവറി ചെയ്തു"),
-        "step_delivered_desc": Entry(en: "Order completed", ml: "ഓർഡർ ലഭിച്ചു കഴിഞ്ഞു")
+        "step_delivered_desc": Entry(en: "Order completed", ml: "ഓർഡർ ലഭിച്ചു കഴിഞ്ഞു"),
+
+        // Customer Care Support & Calling
+        "support_title": Entry(en: "Customer Support", ml: "കസ്റ്റമർ കെയർ (Support)"),
+        "customer_care": Entry(en: "🎧 24x7 Customer Care", ml: "🎧 24x7 കസ്റ്റമർ കെയർ സപ്പോർട്ട്"),
+        "support_subtitle": Entry(en: "Chat, send voice notes, or call our executive directly", ml: "സപ്പോർട്ട് എക്സിക്യൂട്ടീവുമായി ചാറ്റ് ചെയ്യാനും സംസാരിക്കാനും ഇവിടെ ക്ലിക്ക് ചെയ്യുക"),
+        "type_message": Entry(en: "Type a message...", ml: "സന്ദേശം ടൈപ്പ് ചെയ്യുക..."),
+        "send_message": Entry(en: "Send", ml: "അയക്കുക"),
+        "record_voice": Entry(en: "Hold to Record", ml: "വോയ്‌സ് റെക്കോർഡ് ചെയ്യുക"),
+        "recording_active": Entry(en: "Recording Voice Note...", ml: "വോയ്‌സ് റെക്കോർഡ് ചെയ്യുന്നു..."),
+        "audio_call": Entry(en: "Audio Call", ml: "ഓഡിയോ കോൾ"),
+        "video_call": Entry(en: "Video Call", ml: "വീഡിയോ കോൾ"),
+        "call_connecting": Entry(en: "Connecting Call...", ml: "കോൾ കണക്റ്റ് ചെയ്യുന്നു..."),
+        "incoming_call_from": Entry(en: "Incoming Call from Support Executive!", ml: "സപ്പോർട്ട് എക്സിക്യൂട്ടീവ് വിളിക്കുന്നു!"),
+        "answer_call": Entry(en: "Answer", ml: "സ്വീകരിക്കുക"),
+        "decline_call": Entry(en: "Decline", ml: "നിരസിക്കുക"),
+        "end_call": Entry(en: "End Call", ml: "കോൾ അവസാനിപ്പിക്കുക")
     ]
 }

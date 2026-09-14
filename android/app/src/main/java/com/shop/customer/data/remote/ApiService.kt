@@ -317,4 +317,143 @@ class ApiService(private var baseUrl: String = "https://shop-platform-ky2m.onren
             items = itemsList
         )
     }
+
+    // MARK: - Customer Care Support
+    suspend fun getOrCreateSupportThread(name: String, phone: String, token: String?): SupportThread = withContext(Dispatchers.IO) {
+        val payload = JSONObject().apply {
+            put("name", name)
+            put("phone", phone)
+        }
+        val resStr = makeRequest("/support/threads", method = "POST", jsonBody = payload.toString(), token = token)
+        val obj = JSONObject(resStr).getJSONObject("thread")
+        SupportThread(
+            id = obj.getInt("id"),
+            userId = if (obj.has("user_id") && !obj.isNull("user_id")) obj.optInt("user_id") else null,
+            customerName = obj.optString("customer_name", "Customer"),
+            customerPhone = obj.optString("customer_phone", ""),
+            status = obj.optString("status", "open"),
+            createdAt = obj.optString("created_at", null),
+            updatedAt = obj.optString("updated_at", null)
+        )
+    }
+
+    suspend fun fetchSupportMessages(threadId: Int, token: String?): List<SupportMessage> = withContext(Dispatchers.IO) {
+        val resStr = makeRequest("/support/threads/$threadId/messages", method = "GET", token = token)
+        val obj = JSONObject(resStr)
+        val arr = obj.getJSONArray("messages")
+        val list = mutableListOf<SupportMessage>()
+        for (i in 0 until arr.length()) {
+            val item = arr.getJSONObject(i)
+            list.add(
+                SupportMessage(
+                    id = item.getInt("id"),
+                    threadId = item.getInt("thread_id"),
+                    senderRole = item.optString("sender_role", "customer"),
+                    senderId = if (item.has("sender_id") && !item.isNull("sender_id")) item.optInt("sender_id") else null,
+                    senderName = item.optString("sender_name", "User"),
+                    messageType = item.optString("message_type", "text"),
+                    content = item.optString("content", ""),
+                    audioDuration = item.optDouble("audio_duration", 0.0),
+                    isRead = item.optInt("is_read", 0),
+                    createdAt = item.optString("created_at", null)
+                )
+            )
+        }
+        list
+    }
+
+    suspend fun sendSupportMessage(
+        threadId: Int,
+        content: String,
+        type: String = "text",
+        duration: Double = 0.0,
+        token: String?,
+        senderName: String
+    ): SupportMessage = withContext(Dispatchers.IO) {
+        val payload = JSONObject().apply {
+            put("message_type", type)
+            put("content", content)
+            put("audio_duration", duration)
+            put("sender_role", "customer")
+            put("sender_name", senderName)
+        }
+        val resStr = makeRequest("/support/threads/$threadId/messages", method = "POST", jsonBody = payload.toString(), token = token)
+        val item = JSONObject(resStr).getJSONObject("message")
+        SupportMessage(
+            id = item.getInt("id"),
+            threadId = item.getInt("thread_id"),
+            senderRole = item.optString("sender_role", "customer"),
+            senderId = if (item.has("sender_id") && !item.isNull("sender_id")) item.optInt("sender_id") else null,
+            senderName = item.optString("sender_name", senderName),
+            messageType = item.optString("message_type", type),
+            content = item.optString("content", content),
+            audioDuration = item.optDouble("audio_duration", duration),
+            isRead = item.optInt("is_read", 0),
+            createdAt = item.optString("created_at", null)
+        )
+    }
+
+    suspend fun uploadVoiceNote(base64Audio: String, format: String = "m4a", duration: Double = 0.0): String = withContext(Dispatchers.IO) {
+        val payload = JSONObject().apply {
+            put("audio_data", base64Audio)
+            put("format", format)
+            put("duration", duration)
+        }
+        val resStr = makeRequest("/support/upload-audio", method = "POST", jsonBody = payload.toString())
+        JSONObject(resStr).getString("audio_url")
+    }
+
+    suspend fun startSupportCall(
+        threadId: Int,
+        callType: String,
+        callerName: String,
+        token: String?
+    ): SupportCallSession = withContext(Dispatchers.IO) {
+        val payload = JSONObject().apply {
+            put("thread_id", threadId)
+            put("call_type", callType)
+            put("caller_role", "customer")
+            put("caller_name", callerName)
+        }
+        val resStr = makeRequest("/support/call/start", method = "POST", jsonBody = payload.toString(), token = token)
+        val obj = JSONObject(resStr)
+        SupportCallSession(
+            id = obj.getString("call_id"),
+            threadId = obj.getInt("thread_id"),
+            callerRole = obj.optString("caller_role", "customer"),
+            callerName = obj.optString("caller_name", callerName),
+            callType = obj.optString("call_type", callType),
+            status = obj.optString("status", "ringing")
+        )
+    }
+
+    suspend fun checkActiveCall(threadId: Int): SupportCallSession? = withContext(Dispatchers.IO) {
+        try {
+            val resStr = makeRequest("/support/call/active?thread_id=$threadId", method = "GET")
+            val obj = JSONObject(resStr)
+            if (obj.optBoolean("active", false) && obj.has("call") && !obj.isNull("call")) {
+                val callObj = obj.getJSONObject("call")
+                SupportCallSession(
+                    id = callObj.getString("id"),
+                    threadId = callObj.getInt("thread_id"),
+                    callerRole = callObj.optString("caller_role", "customer"),
+                    callerName = callObj.optString("caller_name", "Support"),
+                    callType = callObj.optString("call_type", "audio"),
+                    status = callObj.optString("status", "ringing")
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    suspend fun endSupportCall(callId: String) = withContext(Dispatchers.IO) {
+        val payload = JSONObject().apply {
+            put("call_id", callId)
+            put("status", "ended")
+        }
+        makeRequest("/support/call/end", method = "POST", jsonBody = payload.toString())
+    }
 }

@@ -90,6 +90,43 @@ function initDatabase() {
       key TEXT PRIMARY KEY,
       value TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS support_threads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      customer_name TEXT NOT NULL,
+      customer_phone TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS support_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      thread_id INTEGER NOT NULL REFERENCES support_threads(id) ON DELETE CASCADE,
+      sender_role TEXT NOT NULL,
+      sender_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      sender_name TEXT NOT NULL,
+      message_type TEXT NOT NULL DEFAULT 'text',
+      content TEXT NOT NULL,
+      audio_duration REAL DEFAULT 0,
+      is_read INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS support_calls (
+      id TEXT PRIMARY KEY,
+      thread_id INTEGER NOT NULL REFERENCES support_threads(id) ON DELETE CASCADE,
+      caller_role TEXT NOT NULL,
+      caller_name TEXT NOT NULL,
+      call_type TEXT NOT NULL DEFAULT 'audio',
+      status TEXT NOT NULL DEFAULT 'ringing',
+      offer_sdp TEXT,
+      answer_sdp TEXT,
+      ice_candidates TEXT DEFAULT '[]',
+      started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      ended_at DATETIME
+    );
   `);
 
 
@@ -137,6 +174,13 @@ function initDatabase() {
   if (!adminUser) {
     const insertAdmin = db.prepare('INSERT INTO users (role, name, email, password_hash, phone) VALUES (?, ?, ?, ?, ?)');
     insertAdmin.run('admin', 'ഷോപ്പ് മാനേജർ (Admin)', 'admin@shop.local', hashPassword('admin123'), '+91 98470 12345');
+  }
+
+  // Seed default support executive if empty
+  const supportUser = db.prepare('SELECT id FROM users WHERE email = ?').get('support@shop.local');
+  if (!supportUser) {
+    const insertSupport = db.prepare('INSERT INTO users (role, name, email, password_hash, phone) VALUES (?, ?, ?, ?, ?)');
+    insertSupport.run('support', 'കസ്റ്റമർ കെയർ എക്സിക്യൂട്ടീവ് (Support Agent)', 'support@shop.local', hashPassword('support123'), '+91 98470 54321');
   }
 }
 

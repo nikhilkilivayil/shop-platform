@@ -84,8 +84,21 @@ const MIME_TYPES = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
-  ".ico": "image/x-icon"
+  ".ico": "image/x-icon",
+  ".webm": "audio/webm",
+  ".wav": "audio/wav",
+  ".mp3": "audio/mpeg",
+  ".m4a": "audio/mp4",
+  ".ogg": "audio/ogg",
+  ".aac": "audio/aac",
+  ".mp4": "video/mp4"
 };
+
+const UPLOADS_DIR = path.join(PUBLIC_DIR, "uploads");
+const UPLOADS_AUDIO_DIR = path.join(UPLOADS_DIR, "audio");
+if (!fs.existsSync(UPLOADS_AUDIO_DIR)) {
+  fs.mkdirSync(UPLOADS_AUDIO_DIR, { recursive: true });
+}
 
 function serveStatic(req, res, pathname) {
   let cleanPath = pathname === "/" ? "/index.html" : pathname;
@@ -807,6 +820,274 @@ async function handleRequest(req, res) {
           recentOrders,
           lowStockItems
         });
+      }
+
+      // ==========================================
+      // Customer Care Support & Omnichannel Routes
+      // ==========================================
+
+      // Get or Create Support Thread
+      if (pathname === "/api/support/threads" && req.method === "POST") {
+        const authUser = getAuthUser(req);
+        const body = await parseJsonBody(req);
+        const customer_name = (authUser ? authUser.name : body.name) || "Customer";
+        const customer_phone = normalizePhone((authUser ? authUser.phone : body.phone) || "");
+        const user_id = authUser ? authUser.id : null;
+
+        // Check for existing open thread
+        let thread = null;
+        if (user_id) {
+          thread = db.prepare("SELECT * FROM support_threads WHERE user_id = ? AND status = 'open' ORDER BY updated_at DESC LIMIT 1").get(user_id);
+        }
+        if (!thread && customer_phone) {
+          thread = db.prepare("SELECT * FROM support_threads WHERE customer_phone = ? AND status = 'open' ORDER BY updated_at DESC LIMIT 1").get(customer_phone);
+        }
+
+        if (!thread) {
+          const info = db.prepare(`
+            INSERT INTO support_threads (user_id, customer_name, customer_phone, status, created_at, updated_at)
+            VALUES (?, ?, ?, 'open', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `).run(user_id, customer_name, customer_phone);
+          const threadId = info.lastInsertRowid;
+          thread = db.prepare("SELECT * FROM support_threads WHERE id = ?").get(threadId);
+
+          // Seed default welcome message
+          db.prepare(`
+            INSERT INTO support_messages (thread_id, sender_role, sender_id, sender_name, message_type, content, is_read)
+            VALUES (?, 'support', NULL, 'വിപണി സപ്പോർട്ട് (Vipani Care)', 'text', 'നമസ്കാരം! വിപണി കസ്റ്റമർ കെയറിലേക്ക് സ്വാഗതം. താങ്കളെ എങ്ങനെയാണ് സഹായിക്കേണ്ടത്? (Welcome to Vipani Care! How may we assist you today?)', 0)
+          `).run(threadId);
+        }
+
+        return sendJson(res, 200, { success: true, thread });
+      }
+
+      // List all threads for Support Agent / Admin
+      if (pathname === "/api/support/threads" && req.method === "GET") {
+        const authUser = getAuthUser(req);
+        if (!authUser || (authUser.role !== "support" && authUser.role !== "admin")) {
+          return sendJson(res, 403, { error: "Support Executive or Admin access required" });
+        }
+
+        const threads = db.prepare(`
+          SELECT t.*, u.email as user_email, u.device_id
+          FROM support_threads t
+          LEFT JOIN users u ON u.id = t.user_id
+          ORDER BY t.updated_at DESC
+        `).all();
+
+        for (const t of threads) {
+          const lastMsg = db.prepare("SELECT * FROM support_messages WHERE thread_id = ? ORDER BY created_at DESC LIMIT 1").get(t.id);
+          const unread = db.prepare("SELECT COUNT(*) as count FROM support_messages WHERE thread_id = ? AND sender_role = 'customer' AND is_read = 0").get(t.id);
+          t.last_message = lastMsg || null;
+          t.unread_count = unread ? unread.count : 0;
+        }
+
+        return sendJson(res, 200, { success: true, threads });
+      }
+
+      // Thread Messages (Get & Post)
+      const threadMsgMatch = pathname.match(/^\/api\/support\/threads\/(\d+)\/messages$/);
+      if (threadMsgMatch) {
+        const threadId = Number(threadMsgMatch[1]);
+
+        if (req.method === "GET") {
+          const authUser = getAuthUser(req);
+          // Mark messages as read for receiver
+          if (authUser && (authUser.role === "support" || authUser.role === "admin")) {
+            db.prepare("UPDATE support_messages SET is_read = 1 WHERE thread_id = ? AND sender_role = 'customer' AND is_read = 0").run(threadId);
+          } else {
+            db.prepare("UPDATE support_messages SET is_read = 1 WHERE thread_id = ? AND sender_role = 'support' AND is_read = 0").run(threadId);
+          }
+
+          const thread = db.prepare("SELECT * FROM support_threads WHERE id = ?").get(threadId);
+          if (!thread) {
+            return sendJson(res, 404, { error: "Support thread not found" });
+          }
+
+          const messages = db.prepare("SELECT * FROM support_messages WHERE thread_id = ? ORDER BY created_at ASC").all(threadId);
+          return sendJson(res, 200, { success: true, thread, messages });
+        }
+
+        if (req.method === "POST") {
+          const authUser = getAuthUser(req);
+          const body = await parseJsonBody(req);
+          const messageType = body.message_type === "audio" ? "audio" : "text";
+          const content = body.content ? String(body.content).trim() : "";
+          const audioDuration = Number(body.audio_duration || 0);
+
+          if (!content) {
+            return sendJson(res, 400, { error: "Message content cannot be empty" });
+          }
+
+          let senderRole = "customer";
+          let senderName = "Customer";
+          let senderId = null;
+
+          if (authUser) {
+            senderId = authUser.id;
+            if (authUser.role === "support" || authUser.role === "admin") {
+              senderRole = "support";
+              senderName = authUser.name || "സപ്പോർട്ട് എക്സിക്യൂട്ടീവ്";
+            } else {
+              senderRole = "customer";
+              senderName = authUser.name || "Customer";
+            }
+          } else {
+            senderRole = body.sender_role === "support" ? "support" : "customer";
+            senderName = body.sender_name || (senderRole === "support" ? "സപ്പോർട്ട് എക്സിക്യൂട്ടീവ്" : "Customer");
+          }
+
+          const info = db.prepare(`
+            INSERT INTO support_messages (thread_id, sender_role, sender_id, sender_name, message_type, content, audio_duration, is_read, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)
+          `).run(threadId, senderRole, senderId, senderName, messageType, content, audioDuration);
+
+          db.prepare("UPDATE support_threads SET updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(threadId);
+
+          const insertedMsg = db.prepare("SELECT * FROM support_messages WHERE id = ?").get(info.lastInsertRowid);
+          return sendJson(res, 201, { success: true, message: insertedMsg });
+        }
+      }
+
+      // Audio Upload (Voice Notes)
+      if (pathname === "/api/support/upload-audio" && req.method === "POST") {
+        const body = await parseJsonBody(req);
+        let audioData = body.audio_data || body.audio || body.data;
+        const format = (body.format || "webm").toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (!audioData) {
+          return sendJson(res, 400, { error: "Audio data is required (base64)" });
+        }
+
+        // Strip data:audio/...;base64, prefix if present
+        if (audioData.includes(",")) {
+          audioData = audioData.split(",")[1];
+        }
+
+        const buffer = Buffer.from(audioData, "base64");
+        const ext = format === "wav" ? "wav" : format === "m4a" ? "m4a" : format === "mp3" ? "mp3" : format === "ogg" ? "ogg" : "webm";
+        const filename = `voice_${Date.now()}_${crypto.randomBytes(4).toString("hex")}.${ext}`;
+        const filePath = path.join(UPLOADS_AUDIO_DIR, filename);
+
+        await fs.promises.writeFile(filePath, buffer);
+        const audioUrl = `/uploads/audio/${filename}`;
+
+        return sendJson(res, 200, {
+          success: true,
+          audio_url: audioUrl,
+          duration: Number(body.duration || 0),
+          size: buffer.length
+        });
+      }
+
+      // Start Call
+      if (pathname === "/api/support/call/start" && req.method === "POST") {
+        const authUser = getAuthUser(req);
+        const body = await parseJsonBody(req);
+        const thread_id = Number(body.thread_id);
+        const call_type = body.call_type === "video" ? "video" : "audio";
+        const caller_role = (authUser && (authUser.role === "support" || authUser.role === "admin")) ? "support" : (body.caller_role || "customer");
+        const caller_name = (authUser ? authUser.name : body.caller_name) || (caller_role === "support" ? "വിപണി സപ്പോർട്ട്" : "Customer");
+        const offer_sdp = body.offer_sdp ? (typeof body.offer_sdp === "object" ? JSON.stringify(body.offer_sdp) : String(body.offer_sdp)) : null;
+
+        if (!thread_id) {
+          return sendJson(res, 400, { error: "Thread ID is required" });
+        }
+
+        // Cancel previous pending calls for thread
+        db.prepare("UPDATE support_calls SET status = 'ended', ended_at = CURRENT_TIMESTAMP WHERE thread_id = ? AND status = 'ringing'").run(thread_id);
+
+        const call_id = crypto.randomUUID();
+        db.prepare(`
+          INSERT INTO support_calls (id, thread_id, caller_role, caller_name, call_type, status, offer_sdp, ice_candidates, started_at)
+          VALUES (?, ?, ?, ?, ?, 'ringing', ?, '[]', CURRENT_TIMESTAMP)
+        `).run(call_id, thread_id, caller_role, caller_name, call_type, offer_sdp);
+
+        // Post notice in chat
+        const callIcon = call_type === "video" ? "📹" : "📞";
+        const callTypeLabel = call_type === "video" ? "വീഡിയോ കോൾ (Video Call)" : "ഓഡിയോ കോൾ (Audio Call)";
+        db.prepare(`
+          INSERT INTO support_messages (thread_id, sender_role, sender_name, message_type, content, is_read)
+          VALUES (?, ?, ?, 'text', ?, 1)
+        `).run(thread_id, caller_role, caller_name, `${callIcon} ${callTypeLabel} ആരംഭിച്ചു (${caller_name})`);
+        db.prepare("UPDATE support_threads SET updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(thread_id);
+
+        return sendJson(res, 200, {
+          success: true,
+          call_id,
+          thread_id,
+          call_type,
+          caller_role,
+          caller_name,
+          status: "ringing"
+        });
+      }
+
+      // Check Active Call for thread
+      if (pathname === "/api/support/call/active" && req.method === "GET") {
+        const thread_id = Number(parsedUrl.searchParams.get("thread_id"));
+        if (!thread_id) {
+          return sendJson(res, 400, { error: "Thread ID is required" });
+        }
+
+        // Clean up stale ringing calls older than 45s
+        db.prepare("UPDATE support_calls SET status = 'ended', ended_at = CURRENT_TIMESTAMP WHERE status = 'ringing' AND (strftime('%s', 'now') - strftime('%s', started_at)) > 45").run();
+
+        const call = db.prepare("SELECT * FROM support_calls WHERE thread_id = ? AND status IN ('ringing', 'connected') ORDER BY started_at DESC LIMIT 1").get(thread_id);
+        return sendJson(res, 200, {
+          active: !!call,
+          call: call || null
+        });
+      }
+
+      // Answer Call
+      if (pathname === "/api/support/call/answer" && req.method === "POST") {
+        const { call_id, answer_sdp } = await parseJsonBody(req);
+        if (!call_id) {
+          return sendJson(res, 400, { error: "Call ID is required" });
+        }
+
+        const answerJson = typeof answer_sdp === "object" ? JSON.stringify(answer_sdp) : String(answer_sdp || "");
+        db.prepare("UPDATE support_calls SET status = 'connected', answer_sdp = ? WHERE id = ?").run(answerJson, call_id);
+        return sendJson(res, 200, { success: true, status: "connected" });
+      }
+
+      // ICE Candidates Exchange
+      if (pathname === "/api/support/call/ice" && req.method === "POST") {
+        const { call_id, candidate, sender_role } = await parseJsonBody(req);
+        if (!call_id || !candidate) {
+          return sendJson(res, 400, { error: "Call ID and candidate are required" });
+        }
+
+        const call = db.prepare("SELECT ice_candidates FROM support_calls WHERE id = ?").get(call_id);
+        if (call) {
+          let candidates = [];
+          try { candidates = JSON.parse(call.ice_candidates || "[]"); } catch (e) { candidates = []; }
+          candidates.push({ candidate, sender_role: sender_role || "unknown", time: Date.now() });
+          db.prepare("UPDATE support_calls SET ice_candidates = ? WHERE id = ?").run(JSON.stringify(candidates), call_id);
+        }
+        return sendJson(res, 200, { success: true });
+      }
+
+      // Get Call Status & Signaling Info
+      const callStatusMatch = pathname.match(/^\/api\/support\/call\/([a-zA-Z0-9\-]+)\/status$/);
+      if (callStatusMatch && req.method === "GET") {
+        const callId = callStatusMatch[1];
+        const call = db.prepare("SELECT * FROM support_calls WHERE id = ?").get(callId);
+        if (!call) {
+          return sendJson(res, 404, { error: "Call not found" });
+        }
+        return sendJson(res, 200, { success: true, call });
+      }
+
+      // End Call
+      if (pathname === "/api/support/call/end" && req.method === "POST") {
+        const { call_id, status } = await parseJsonBody(req);
+        if (!call_id) {
+          return sendJson(res, 400, { error: "Call ID is required" });
+        }
+        const finalStatus = status === "declined" ? "declined" : "ended";
+        db.prepare("UPDATE support_calls SET status = ?, ended_at = CURRENT_TIMESTAMP WHERE id = ?").run(finalStatus, call_id);
+        return sendJson(res, 200, { success: true, status: finalStatus });
       }
 
       return sendJson(res, 404, { error: "API route not found" });
