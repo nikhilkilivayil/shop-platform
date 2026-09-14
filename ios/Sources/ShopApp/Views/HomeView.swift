@@ -23,6 +23,7 @@ public struct HomeView: View {
                             .foregroundColor(ShopTheme.textSecondary)
                         TextField(lang.t("search_placeholder"), text: $searchText)
                             .foregroundColor(ShopTheme.textPrimary)
+                            .tint(ShopTheme.primaryForest)
                             .onSubmit {
                                 Task { await viewModel.search(searchText) }
                             }

@@ -100,11 +100,17 @@ public struct LoginOTPView: View {
 
                 TextField("10-digit mobile number", text: $phone)
                     .appKeyboardTypePhone()
-                    .font(.system(size: 15))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(ShopTheme.textPrimary)
+                    .tint(ShopTheme.primaryForest)
             }
             .padding(12)
-            .background(ShopTheme.background)
+            .background(Color.white)
             .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(ShopTheme.cardBorder, lineWidth: 1.5)
+            )
 
             if !otpSent {
                 sendOtpButton
@@ -164,9 +170,7 @@ public struct LoginOTPView: View {
                     .foregroundColor(ShopTheme.textPrimary)
 
                 TextField(lang.t("name_label"), text: $name)
-                    .padding(12)
-                    .background(ShopTheme.background)
-                    .cornerRadius(10)
+                    .appTextFieldStyle()
             }
 
             Text("🔑 \(lang.t("otp_label"))")
@@ -176,9 +180,7 @@ public struct LoginOTPView: View {
             TextField("4-Digit OTP", text: $otp)
                 .appKeyboardTypeNumber()
                 .font(.system(size: 18, weight: .bold))
-                .padding(12)
-                .background(ShopTheme.background)
-                .cornerRadius(10)
+                .appTextFieldStyle()
 
             if let sentCode = auth.lastSentOtpForDisplay {
                 Text("💡 Test OTP: \(sentCode)")

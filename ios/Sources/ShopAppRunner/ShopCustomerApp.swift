@@ -13,6 +13,7 @@ struct ShopCustomerApp: App {
                 .environmentObject(cart)
                 .environmentObject(auth)
                 .environmentObject(lang)
+                .preferredColorScheme(.light)
         }
     }
 }

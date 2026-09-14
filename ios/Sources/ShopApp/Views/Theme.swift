@@ -65,5 +65,19 @@ extension View {
         self
         #endif
     }
+
+    @ViewBuilder
+    public func appTextFieldStyle() -> some View {
+        self
+            .foregroundColor(ShopTheme.textPrimary)
+            .tint(ShopTheme.primaryForest)
+            .padding(12)
+            .background(Color.white)
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(ShopTheme.cardBorder, lineWidth: 1.5)
+            )
+    }
 }
 

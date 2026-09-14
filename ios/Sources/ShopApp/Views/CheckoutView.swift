@@ -129,38 +129,26 @@ public struct CheckoutView: View {
                 .foregroundColor(ShopTheme.textPrimary)
 
             TextField(lang.t("full_name"), text: $name)
-                .padding(10)
-                .background(ShopTheme.background)
-                .cornerRadius(8)
+                .appTextFieldStyle()
 
             TextField(lang.t("phone_number"), text: $phone)
                 .appKeyboardTypeNumber()
-                .padding(10)
-                .background(ShopTheme.background)
-                .cornerRadius(8)
+                .appTextFieldStyle()
 
             TextField(lang.t("street_address"), text: $address)
-                .padding(10)
-                .background(ShopTheme.background)
-                .cornerRadius(8)
+                .appTextFieldStyle()
 
             HStack {
                 TextField(lang.t("city"), text: $city)
-                    .padding(10)
-                    .background(ShopTheme.background)
-                    .cornerRadius(8)
+                    .appTextFieldStyle()
 
                 TextField(lang.t("pincode"), text: $pincode)
                     .appKeyboardTypeNumber()
-                    .padding(10)
-                    .background(ShopTheme.background)
-                    .cornerRadius(8)
+                    .appTextFieldStyle()
             }
 
             TextField(lang.t("delivery_notes"), text: $notes)
-                .padding(10)
-                .background(ShopTheme.background)
-                .cornerRadius(8)
+                .appTextFieldStyle()
         }
         .padding(16)
         .background(ShopTheme.surface)

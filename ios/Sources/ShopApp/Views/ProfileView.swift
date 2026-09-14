@@ -143,32 +143,22 @@ public struct ProfileView: View {
                 .foregroundColor(ShopTheme.textPrimary)
 
             TextField(lang.t("full_name"), text: $name)
-                .padding(10)
-                .background(ShopTheme.background)
-                .cornerRadius(8)
+                .appTextFieldStyle()
 
             TextField(lang.t("email_optional"), text: $email)
                 .appKeyboardTypeEmail()
-                .padding(10)
-                .background(ShopTheme.background)
-                .cornerRadius(8)
+                .appTextFieldStyle()
 
             TextField(lang.t("street_address"), text: $address)
-                .padding(10)
-                .background(ShopTheme.background)
-                .cornerRadius(8)
+                .appTextFieldStyle()
 
             HStack {
                 TextField(lang.t("city"), text: $city)
-                    .padding(10)
-                    .background(ShopTheme.background)
-                    .cornerRadius(8)
+                    .appTextFieldStyle()
 
                 TextField(lang.t("pincode"), text: $pincode)
                     .appKeyboardTypeNumber()
-                    .padding(10)
-                    .background(ShopTheme.background)
-                    .cornerRadius(8)
+                    .appTextFieldStyle()
             }
 
             Button(action: {
@@ -223,9 +213,7 @@ public struct ProfileView: View {
 
             TextField("https://shop-platform-ky2m.onrender.com/api", text: $serverUrl)
                 .font(.system(size: 13, design: .monospaced))
-                .padding(10)
-                .background(ShopTheme.background)
-                .cornerRadius(8)
+                .appTextFieldStyle()
 
             if let msg = serverSavedMessage {
                 Text(msg)
