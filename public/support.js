@@ -28,9 +28,29 @@ let isCamOff = false;
 const rtcConfig = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" }
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
+    { urls: "stun:stun3.l.google.com:19302" },
+    { urls: "stun:stun4.l.google.com:19302" },
+    { urls: "stun:global.stun.twilio.com:3478" }
   ]
 };
+
+let processedCandidates = new Set();
+let pendingRemoteCandidates = [];
+let localIceQueue = [];
+
+async function drainPendingRemoteCandidates() {
+  if (!peerConnection || !peerConnection.remoteDescription) return;
+  while (pendingRemoteCandidates.length > 0) {
+    const candidate = pendingRemoteCandidates.shift();
+    try {
+      await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    } catch(e) {
+      console.warn("Support addIceCandidate error:", e);
+    }
+  }
+}
 
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", async () => {
@@ -352,6 +372,10 @@ async function finishAndSendVoiceRecording() {
 async function initiateCall(callType) {
   if (!activeThread) return;
 
+  processedCandidates.clear();
+  pendingRemoteCandidates = [];
+  localIceQueue = [];
+
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
       audio: true,
@@ -365,17 +389,35 @@ async function initiateCall(callType) {
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
     peerConnection.ontrack = event => {
-      if (event.streams && event.streams[0]) {
-        const stream = event.streams[0];
-        const remoteAudio = document.getElementById("remote-audio");
-        if (remoteAudio) {
-          remoteAudio.srcObject = stream;
-          remoteAudio.play().catch(e => console.log("Audio autoplay error:", e));
-        }
-        const remoteVideo = document.getElementById("remote-video");
-        if (remoteVideo) {
-          remoteVideo.srcObject = stream;
-          remoteVideo.play().catch(e => console.log("Video autoplay error:", e));
+      console.log("Support WebRTC ontrack:", event.track ? event.track.kind : "unknown", event.streams);
+      const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+      const remoteAudio = document.getElementById("remote-audio");
+      if (remoteAudio) {
+        remoteAudio.srcObject = stream;
+        remoteAudio.play().catch(e => console.log("Audio autoplay error:", e));
+      }
+      const remoteVideo = document.getElementById("remote-video");
+      if (remoteVideo) {
+        remoteVideo.srcObject = stream;
+        remoteVideo.play().catch(e => console.log("Video autoplay error:", e));
+      }
+    };
+
+    // Register onicecandidate BEFORE creating offer to avoid losing initial candidates
+    peerConnection.onicecandidate = e => {
+      if (e.candidate) {
+        if (currentCall && currentCall.call_id) {
+          fetch("/api/support/call/ice", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              call_id: currentCall.call_id,
+              candidate: e.candidate,
+              sender_role: "support"
+            })
+          }).catch(err => console.error("ICE candidate send failed:", err));
+        } else {
+          localIceQueue.push(e.candidate);
         }
       }
     };
@@ -398,19 +440,19 @@ async function initiateCall(callType) {
     const callData = await startRes.json();
     currentCall = callData;
 
-    peerConnection.onicecandidate = e => {
-      if (e.candidate) {
-        fetch("/api/support/call/ice", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            call_id: currentCall.call_id,
-            candidate: e.candidate,
-            sender_role: "support"
-          })
-        });
-      }
-    };
+    // Immediately flush any buffered candidates that gathered during setLocalDescription
+    while (localIceQueue.length > 0) {
+      const cand = localIceQueue.shift();
+      fetch("/api/support/call/ice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          call_id: currentCall.call_id,
+          candidate: cand,
+          sender_role: "support"
+        })
+      }).catch(err => console.error("ICE flush failed:", err));
+    }
 
     startCallStatusPolling();
 
@@ -473,18 +515,27 @@ function startCallStatusPolling() {
 
         if (answerObj && answerObj.sdp) {
           await peerConnection.setRemoteDescription(new RTCSessionDescription(answerObj));
+          await drainPendingRemoteCandidates();
         }
       }
 
-      // Add remote ICE candidates
+      // Add remote ICE candidates safely with deduplication and queueing
       if (call.ice_candidates && peerConnection) {
         let candidates = [];
         try { candidates = JSON.parse(call.ice_candidates); } catch(e) {}
         for (const c of candidates) {
           if (c.sender_role === "customer" && c.candidate) {
-            try {
-              await peerConnection.addIceCandidate(new RTCIceCandidate(c.candidate));
-            } catch(e) {}
+            const candKey = typeof c.candidate === "object" ? (c.candidate.candidate || JSON.stringify(c.candidate)) : String(c.candidate);
+            if (!processedCandidates.has(candKey)) {
+              processedCandidates.add(candKey);
+              if (peerConnection.remoteDescription) {
+                try {
+                  await peerConnection.addIceCandidate(new RTCIceCandidate(c.candidate));
+                } catch(e) {}
+              } else {
+                pendingRemoteCandidates.push(c.candidate);
+              }
+            }
           }
         }
       }
@@ -492,13 +543,17 @@ function startCallStatusPolling() {
     } catch (err) {
       console.error("Call polling error:", err);
     }
-  }, 1500);
+  }, 1000);
 }
 
 async function answerIncomingCall(call) {
   currentCall = { call_id: call.id, ...call };
   document.getElementById("incoming-call-banner").style.display = "none";
   stopRingtone();
+
+  processedCandidates.clear();
+  pendingRemoteCandidates = [];
+  localIceQueue = [];
 
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
@@ -512,18 +567,17 @@ async function answerIncomingCall(call) {
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
     peerConnection.ontrack = event => {
-      if (event.streams && event.streams[0]) {
-        const stream = event.streams[0];
-        const remoteAudio = document.getElementById("remote-audio");
-        if (remoteAudio) {
-          remoteAudio.srcObject = stream;
-          remoteAudio.play().catch(e => console.log("Audio autoplay error:", e));
-        }
-        const remoteVideo = document.getElementById("remote-video");
-        if (remoteVideo) {
-          remoteVideo.srcObject = stream;
-          remoteVideo.play().catch(e => console.log("Video autoplay error:", e));
-        }
+      console.log("Support WebRTC ontrack (incoming):", event.track ? event.track.kind : "unknown", event.streams);
+      const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+      const remoteAudio = document.getElementById("remote-audio");
+      if (remoteAudio) {
+        remoteAudio.srcObject = stream;
+        remoteAudio.play().catch(e => console.log("Audio autoplay error:", e));
+      }
+      const remoteVideo = document.getElementById("remote-video");
+      if (remoteVideo) {
+        remoteVideo.srcObject = stream;
+        remoteVideo.play().catch(e => console.log("Video autoplay error:", e));
       }
     };
 
@@ -537,14 +591,32 @@ async function answerIncomingCall(call) {
             candidate: e.candidate,
             sender_role: "support"
           })
-        });
+        }).catch(err => console.error("ICE send failed:", err));
       }
     };
 
-    if (call.offer_sdp) {
+    // If caller hasn't uploaded offer yet, poll for up to 10 seconds
+    let offerSdp = call.offer_sdp;
+    if (!offerSdp) {
+      for (let i = 0; i < 20; i++) {
+        await new Promise(r => setTimeout(r, 500));
+        const checkRes = await fetch(`/api/support/call/${currentCall.call_id}/status`);
+        if (checkRes.ok) {
+          const checkData = await checkRes.json();
+          if (checkData.call && checkData.call.offer_sdp) {
+            offerSdp = checkData.call.offer_sdp;
+            break;
+          }
+        }
+      }
+    }
+
+    if (offerSdp) {
       let offerObj = null;
-      try { offerObj = JSON.parse(call.offer_sdp); } catch(e) { offerObj = call.offer_sdp; }
+      try { offerObj = typeof offerSdp === "string" ? JSON.parse(offerSdp) : offerSdp; } catch(e) { offerObj = offerSdp; }
       await peerConnection.setRemoteDescription(new RTCSessionDescription(offerObj));
+      await drainPendingRemoteCandidates();
+
       const answer = await peerConnection.createAnswer();
       await peerConnection.setLocalDescription(answer);
 
@@ -556,6 +628,8 @@ async function answerIncomingCall(call) {
           answer_sdp: answer
         })
       });
+    } else {
+      throw new Error("കസ്റ്റമറുടെ WebRTC ഓഫർ ലഭിച്ചില്ല (Offer SDP timed out)");
     }
 
     startCallStatusPolling();
@@ -590,6 +664,9 @@ function cleanupCall() {
     peerConnection.close();
     peerConnection = null;
   }
+  processedCandidates.clear();
+  pendingRemoteCandidates = [];
+  localIceQueue = [];
   currentCall = null;
   document.getElementById("call-modal").style.display = "none";
   document.getElementById("incoming-call-banner").style.display = "none";

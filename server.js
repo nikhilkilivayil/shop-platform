@@ -1045,11 +1045,30 @@ async function handleRequest(req, res) {
         });
       }
 
+      // Set / Update Call Offer SDP
+      if (pathname === "/api/support/call/offer" && req.method === "POST") {
+        const { call_id, offer_sdp } = await parseJsonBody(req);
+        if (!call_id || !offer_sdp) {
+          return sendJson(res, 400, { error: "call_id and offer_sdp are required" });
+        }
+        const offerJson = typeof offer_sdp === "object" ? JSON.stringify(offer_sdp) : String(offer_sdp);
+        db.prepare("UPDATE support_calls SET offer_sdp = ? WHERE id = ?").run(offerJson, call_id);
+        return sendJson(res, 200, { success: true });
+      }
+
       // Answer Call
       if (pathname === "/api/support/call/answer" && req.method === "POST") {
-        const { call_id, answer_sdp } = await parseJsonBody(req);
+        const body = await parseJsonBody(req);
+        const { call_id, answer_sdp, offer_sdp } = body;
         if (!call_id) {
           return sendJson(res, 400, { error: "Call ID is required" });
+        }
+
+        // If an offer was mistakenly sent to /answer, store it as offer_sdp
+        if (offer_sdp && !answer_sdp) {
+          const offerJson = typeof offer_sdp === "object" ? JSON.stringify(offer_sdp) : String(offer_sdp);
+          db.prepare("UPDATE support_calls SET offer_sdp = ? WHERE id = ?").run(offerJson, call_id);
+          return sendJson(res, 200, { success: true, status: "ringing" });
         }
 
         const answerJson = typeof answer_sdp === "object" ? JSON.stringify(answer_sdp) : String(answer_sdp || "");
@@ -1068,8 +1087,17 @@ async function handleRequest(req, res) {
         if (call) {
           let candidates = [];
           try { candidates = JSON.parse(call.ice_candidates || "[]"); } catch (e) { candidates = []; }
-          candidates.push({ candidate, sender_role: sender_role || "unknown", time: Date.now() });
-          db.prepare("UPDATE support_calls SET ice_candidates = ? WHERE id = ?").run(JSON.stringify(candidates), call_id);
+          
+          const candStr = typeof candidate === "object" ? (candidate.candidate || JSON.stringify(candidate)) : String(candidate);
+          const isDuplicate = candidates.some(c => {
+            const existingStr = typeof c.candidate === "object" ? (c.candidate.candidate || JSON.stringify(c.candidate)) : String(c.candidate);
+            return existingStr === candStr && c.sender_role === (sender_role || "unknown");
+          });
+
+          if (!isDuplicate) {
+            candidates.push({ candidate, sender_role: sender_role || "unknown", time: Date.now() });
+            db.prepare("UPDATE support_calls SET ice_candidates = ? WHERE id = ?").run(JSON.stringify(candidates), call_id);
+          }
         }
         return sendJson(res, 200, { success: true });
       }

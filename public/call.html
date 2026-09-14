@@ -48,7 +48,12 @@
       display: block;
     }
     #remote-audio {
-      display: none;
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0.01;
+      pointer-events: none;
+      z-index: -1;
     }
 
     #local-video-wrap {
@@ -308,9 +313,13 @@
         { urls: "stun:stun1.l.google.com:19302" },
         { urls: "stun:stun2.l.google.com:19302" },
         { urls: "stun:stun3.l.google.com:19302" },
-        { urls: "stun:stun4.l.google.com:19302" }
+        { urls: "stun:stun4.l.google.com:19302" },
+        { urls: "stun:global.stun.twilio.com:3478" }
       ]
     };
+
+    const processedIceCandidates = new Set();
+    const pendingRemoteCandidates = [];
 
     const statusLabel = document.getElementById("status-label");
     const callTimer = document.getElementById("call-timer");
@@ -323,6 +332,32 @@
     const btnCam = document.getElementById("btn-cam");
     const btnFlip = document.getElementById("btn-flip");
     const btnEnd = document.getElementById("btn-end");
+
+    const remoteStream = new MediaStream();
+    remoteVideo.srcObject = remoteStream;
+    remoteAudio.srcObject = remoteStream;
+
+    function playRemoteMedia() {
+      remoteAudio.play().catch(e => console.log("Audio play deferred:", e));
+      if (callType === "video") {
+        remoteVideo.play().catch(e => console.log("Video play deferred:", e));
+      }
+    }
+
+    window.addEventListener("click", playRemoteMedia, { passive: true });
+    window.addEventListener("touchstart", playRemoteMedia, { passive: true });
+
+    async function drainPendingIceCandidates() {
+      if (!peerConnection || !peerConnection.remoteDescription) return;
+      while (pendingRemoteCandidates.length > 0) {
+        const candidate = pendingRemoteCandidates.shift();
+        try {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (e) {
+          console.warn("Failed adding queued candidate:", e);
+        }
+      }
+    }
 
     if (callType === "video") {
       audioCallVisual.style.display = "none";
@@ -417,25 +452,24 @@
     function setupPeerConnection() {
       peerConnection = new RTCPeerConnection(rtcConfig);
 
-      localStream.getTracks().forEach(track => {
-        peerConnection.addTrack(track, localStream);
-      });
+      if (localStream) {
+        localStream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, localStream);
+        });
+      }
 
       peerConnection.ontrack = (event) => {
-        console.log("WebRTC ontrack received:", event.streams);
+        console.log("WebRTC ontrack received:", event.track ? event.track.kind : "unknown", event.streams);
         if (event.streams && event.streams[0]) {
-          const stream = event.streams[0];
-          
-          remoteAudio.srcObject = stream;
-          remoteAudio.play().catch(e => console.log("Audio autoplay error:", e));
-
-          if (callType === "video") {
-            remoteVideo.srcObject = stream;
-            remoteVideo.play().catch(e => console.log("Video autoplay error:", e));
-          }
-          
-          onCallConnected();
+          remoteVideo.srcObject = event.streams[0];
+          remoteAudio.srcObject = event.streams[0];
+        } else if (event.track) {
+          remoteStream.addTrack(event.track);
+          remoteVideo.srcObject = remoteStream;
+          remoteAudio.srcObject = remoteStream;
         }
+        playRemoteMedia();
+        onCallConnected();
       };
 
       peerConnection.onicecandidate = (event) => {
@@ -453,8 +487,10 @@
       };
 
       peerConnection.onconnectionstatechange = () => {
+        console.log("PeerConnection state:", peerConnection.connectionState);
         if (peerConnection.connectionState === "connected") {
           onCallConnected();
+          playRemoteMedia();
         } else if (peerConnection.connectionState === "disconnected" || peerConnection.connectionState === "failed") {
           statusLabel.textContent = "റീകണക്റ്റ് ചെയ്യുന്നു...";
         }
@@ -486,10 +522,10 @@
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
 
-            await fetch("/api/support/call/answer", {
+            await fetch("/api/support/call/offer", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ call_id: callId, offer_sdp: offer, status: "ringing" })
+              body: JSON.stringify({ call_id: callId, offer_sdp: offer })
             });
           } else {
             statusLabel.textContent = "റിംഗ് ചെയ്യുന്നു...";
@@ -499,6 +535,8 @@
           if (call.offer_sdp && !peerConnection.currentRemoteDescription) {
             let offerObj = typeof call.offer_sdp === "string" ? JSON.parse(call.offer_sdp) : call.offer_sdp;
             await peerConnection.setRemoteDescription(new RTCSessionDescription(offerObj));
+            await drainPendingIceCandidates();
+
             const answer = await peerConnection.createAnswer();
             await peerConnection.setLocalDescription(answer);
 
@@ -511,6 +549,7 @@
               })
             });
             onCallConnected();
+            playRemoteMedia();
           }
         }
 
@@ -533,20 +572,55 @@
             return;
           }
 
+          // If caller, wait for answer_sdp
           if (call.caller_role === myRole && call.answer_sdp && peerConnection && !peerConnection.currentRemoteDescription) {
             let answerObj = typeof call.answer_sdp === "string" ? JSON.parse(call.answer_sdp) : call.answer_sdp;
             await peerConnection.setRemoteDescription(new RTCSessionDescription(answerObj));
+            await drainPendingIceCandidates();
             onCallConnected();
+            playRemoteMedia();
           }
 
+          // If callee and didn't have offer yet, check if offer is now available
+          if (call.caller_role !== myRole && call.offer_sdp && peerConnection && !peerConnection.currentRemoteDescription) {
+            let offerObj = typeof call.offer_sdp === "string" ? JSON.parse(call.offer_sdp) : call.offer_sdp;
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offerObj));
+            await drainPendingIceCandidates();
+
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+
+            await fetch("/api/support/call/answer", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                call_id: callId,
+                answer_sdp: answer
+              })
+            });
+            onCallConnected();
+            playRemoteMedia();
+          }
+
+          // Process remote ICE candidates
           if (call.ice_candidates && peerConnection) {
             let candidates = [];
             try { candidates = JSON.parse(call.ice_candidates); } catch(e) {}
             for (const c of candidates) {
               if (c.sender_role !== myRole && c.candidate) {
-                try {
-                  await peerConnection.addIceCandidate(new RTCIceCandidate(c.candidate));
-                } catch(e) {}
+                const candKey = typeof c.candidate === "object" ? (c.candidate.candidate || JSON.stringify(c.candidate)) : String(c.candidate);
+                if (!processedIceCandidates.has(candKey)) {
+                  processedIceCandidates.add(candKey);
+                  if (peerConnection.remoteDescription) {
+                    try {
+                      await peerConnection.addIceCandidate(new RTCIceCandidate(c.candidate));
+                    } catch(e) {
+                      console.warn("addIceCandidate error:", e);
+                    }
+                  } else {
+                    pendingRemoteCandidates.push(c.candidate);
+                  }
+                }
               }
             }
           }
@@ -554,7 +628,7 @@
         } catch (err) {
           console.error("Poll error:", err);
         }
-      }, 1200);
+      }, 1000);
     }
 
     function onCallConnected() {
