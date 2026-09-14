@@ -102,6 +102,9 @@ if (!fs.existsSync(UPLOADS_AUDIO_DIR)) {
 
 function serveStatic(req, res, pathname) {
   let cleanPath = pathname === "/" ? "/index.html" : pathname;
+  if (cleanPath === "/support" || cleanPath === "/support/") {
+    cleanPath = "/support.html";
+  }
   let filePath = path.join(PUBLIC_DIR, cleanPath);
 
   if (!filePath.startsWith(PUBLIC_DIR)) {
