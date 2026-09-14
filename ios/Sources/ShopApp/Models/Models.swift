@@ -23,11 +23,14 @@ public struct Product: Identifiable, Codable, Hashable, Sendable {
     public let category_id: Int?
     public let category_name: String?
     public let name: String
+    public let name_ml: String?
     public let sku: String?
     public let price: Double
     public let compare_at_price: Double?
+    public let mrp: Double?
     public let stock: Int
     public let description: String?
+    public let image_url: String?
     public let image_badge: String?
     public let unit: String?
     public let is_active: Int?
@@ -45,11 +48,14 @@ public struct Product: Identifiable, Codable, Hashable, Sendable {
         category_id: Int? = nil,
         category_name: String? = nil,
         name: String,
+        name_ml: String? = nil,
         sku: String? = nil,
         price: Double,
         compare_at_price: Double? = nil,
+        mrp: Double? = nil,
         stock: Int = 10,
         description: String? = nil,
+        image_url: String? = nil,
         image_badge: String? = nil,
         unit: String? = "1 unit",
         is_active: Int? = 1
@@ -58,11 +64,14 @@ public struct Product: Identifiable, Codable, Hashable, Sendable {
         self.category_id = category_id
         self.category_name = category_name
         self.name = name
+        self.name_ml = name_ml
         self.sku = sku
         self.price = price
         self.compare_at_price = compare_at_price
+        self.mrp = mrp
         self.stock = stock
         self.description = description
+        self.image_url = image_url
         self.image_badge = image_badge
         self.unit = unit
         self.is_active = is_active

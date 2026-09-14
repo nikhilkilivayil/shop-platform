@@ -103,11 +103,14 @@ class ApiService(private var baseUrl: String = "https://shop-platform-ky2m.onren
                     categoryId = obj.optInt("category_id"),
                     categoryName = obj.optString("category_name", null),
                     name = obj.getString("name"),
+                    nameMl = if (obj.has("name_ml") && !obj.isNull("name_ml")) obj.getString("name_ml") else null,
                     sku = obj.optString("sku", null),
                     price = obj.getDouble("price"),
                     compareAtPrice = if (obj.has("compare_at_price") && !obj.isNull("compare_at_price")) obj.getDouble("compare_at_price") else null,
+                    mrp = if (obj.has("mrp") && !obj.isNull("mrp")) obj.getDouble("mrp") else null,
                     stock = obj.optInt("stock", 0),
                     description = obj.optString("description", null),
+                    imageUrl = if (obj.has("image_url") && !obj.isNull("image_url")) obj.getString("image_url") else null,
                     imageBadge = obj.optString("image_badge", null),
                     unit = obj.optString("unit", "1 unit")
                 )

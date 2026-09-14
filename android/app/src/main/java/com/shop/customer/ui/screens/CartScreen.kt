@@ -113,6 +113,17 @@ fun CartScreen(
                                 .padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            ProductImageBanner(
+                                name = item.product.name,
+                                nameMl = item.product.nameMl,
+                                categoryId = item.product.categoryId,
+                                rawImageUrl = item.product.imageUrl,
+                                height = 52.dp,
+                                cornerRadius = 10.dp,
+                                isThumbnail = true
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = item.product.name,

@@ -33,68 +33,7 @@ public struct CartView: View {
                         ScrollView {
                             VStack(spacing: 12) {
                                 ForEach(cart.items) { item in
-                                    HStack(spacing: 12) {
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(item.product.name)
-                                                .font(.system(size: 15, weight: .bold))
-                                                .foregroundColor(ShopTheme.textPrimary)
-
-                                            Text("\(item.product.formattedPrice) / \(item.product.unit ?? lang.t("unit_default"))")
-                                                .font(.system(size: 12))
-                                                .foregroundColor(ShopTheme.textSecondary)
-
-                                            Text(String(format: lang.t("cart_item_total"), item.itemTotal))
-                                                .font(.system(size: 13, weight: .semibold))
-                                                .foregroundColor(ShopTheme.primaryForest)
-                                        }
-
-                                        Spacer()
-
-                                        // Quantity buttons
-                                        HStack(spacing: 10) {
-                                            Button(action: {
-                                                cart.decrement(productId: item.product.id)
-                                            }) {
-                                                Image(systemName: "minus")
-                                                    .font(.system(size: 11, weight: .bold))
-                                                    .frame(width: 28, height: 28)
-                                                    .background(ShopTheme.primary.opacity(0.12))
-                                                    .foregroundColor(ShopTheme.primaryForest)
-                                                    .cornerRadius(6)
-                                            }
-
-                                            Text("\(item.quantity)")
-                                                .font(.system(size: 14, weight: .bold))
-                                                .frame(minWidth: 20)
-
-                                            Button(action: {
-                                                cart.increment(productId: item.product.id)
-                                            }) {
-                                                Image(systemName: "plus")
-                                                    .font(.system(size: 11, weight: .bold))
-                                                    .frame(width: 28, height: 28)
-                                                    .background(ShopTheme.primary)
-                                                    .foregroundColor(.white)
-                                                    .cornerRadius(6)
-                                            }
-                                        }
-
-                                        Button(action: {
-                                            cart.remove(productId: item.product.id)
-                                        }) {
-                                            Image(systemName: "trash")
-                                                .font(.system(size: 14))
-                                                .foregroundColor(.red.opacity(0.8))
-                                                .padding(6)
-                                        }
-                                    }
-                                    .padding(14)
-                                    .background(ShopTheme.surface)
-                                    .cornerRadius(14)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .stroke(ShopTheme.cardBorder, lineWidth: 1)
-                                    )
+                                    cartItemRow(item)
                                 }
 
                                 // Delivery promo banner
@@ -208,5 +147,81 @@ public struct CartView: View {
                 CheckoutView()
             }
         }
+    }
+
+    @ViewBuilder
+    private func cartItemRow(_ item: CartItem) -> some View {
+        HStack(spacing: 12) {
+            ProductImageView(
+                name: item.product.name,
+                nameMl: item.product.name_ml,
+                categoryId: item.product.category_id,
+                imageUrl: item.product.image_url,
+                height: 52,
+                cornerRadius: 10,
+                isThumbnail: true
+            )
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.product.name)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(ShopTheme.textPrimary)
+
+                Text("\(item.product.formattedPrice) / \(item.product.unit ?? lang.t("unit_default"))")
+                    .font(.system(size: 12))
+                    .foregroundColor(ShopTheme.textSecondary)
+
+                Text(String(format: lang.t("cart_item_total"), item.itemTotal))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(ShopTheme.primaryForest)
+            }
+
+            Spacer()
+
+            // Quantity buttons
+            HStack(spacing: 10) {
+                Button(action: {
+                    cart.decrement(productId: item.product.id)
+                }) {
+                    Image(systemName: "minus")
+                        .font(.system(size: 11, weight: .bold))
+                        .frame(width: 28, height: 28)
+                        .background(ShopTheme.primary.opacity(0.12))
+                        .foregroundColor(ShopTheme.primaryForest)
+                        .cornerRadius(6)
+                }
+
+                Text("\(item.quantity)")
+                    .font(.system(size: 14, weight: .bold))
+                    .frame(minWidth: 20)
+
+                Button(action: {
+                    cart.increment(productId: item.product.id)
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 11, weight: .bold))
+                        .frame(width: 28, height: 28)
+                        .background(ShopTheme.primary)
+                        .foregroundColor(.white)
+                        .cornerRadius(6)
+                }
+            }
+
+            Button(action: {
+                cart.remove(productId: item.product.id)
+            }) {
+                Image(systemName: "trash")
+                    .font(.system(size: 14))
+                    .foregroundColor(.red.opacity(0.8))
+                    .padding(6)
+            }
+        }
+        .padding(14)
+        .background(ShopTheme.surface)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(ShopTheme.cardBorder, lineWidth: 1)
+        )
     }
 }

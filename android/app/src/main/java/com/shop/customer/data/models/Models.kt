@@ -13,11 +13,14 @@ data class Product(
     val categoryId: Int? = null,
     val categoryName: String? = null,
     val name: String,
+    val nameMl: String? = null,
     val sku: String? = null,
     val price: Double,
     val compareAtPrice: Double? = null,
+    val mrp: Double? = null,
     val stock: Int = 0,
     val description: String? = null,
+    val imageUrl: String? = null,
     val imageBadge: String? = null,
     val unit: String? = "1 unit"
 ) {

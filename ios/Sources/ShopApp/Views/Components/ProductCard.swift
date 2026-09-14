@@ -11,6 +11,16 @@ public struct ProductCard: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            // Product Visual Image Banner
+            ProductImageView(
+                name: product.name,
+                nameMl: product.name_ml,
+                categoryId: product.category_id,
+                imageUrl: product.image_url,
+                height: 110,
+                cornerRadius: 12
+            )
+
             // Top Badge Area / Category
             HStack {
                 Text(product.category_name ?? "Groceries")
