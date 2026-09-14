@@ -38,6 +38,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileInputStream
+import java.net.URLEncoder
+import android.view.ViewGroup
+import android.webkit.JavascriptInterface
+import android.webkit.PermissionRequest
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import androidx.compose.ui.viewinterop.AndroidView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,8 +77,6 @@ fun SupportScreen(
     var activeCall by remember { mutableStateOf<SupportCallSession?>(null) }
     var incomingCall by remember { mutableStateOf<SupportCallSession?>(null) }
     var callSeconds by remember { mutableStateOf(0) }
-    var isMicMuted by remember { mutableStateOf(false) }
-    var isCameraOn by remember { mutableStateOf(true) }
 
     val token = prefManager.getToken()
     val customerName = prefManager.getUser()?.name ?: "Customer"
@@ -570,131 +575,41 @@ fun SupportScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF0B1320))
+                    .background(Color(0xFF0F172A))
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // Top header
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                if (activeCall?.callType == "video") "Video Call" else "Audio Call",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp
+                AndroidView(
+                    factory = { ctx ->
+                        WebView(ctx).apply {
+                            layoutParams = ViewGroup.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT,
+                                ViewGroup.LayoutParams.MATCH_PARENT
                             )
-                            Text(
-                                "%02d:%02d".format(callSeconds / 60, callSeconds % 60),
-                                color = Color(0xFF22C55E),
-                                fontSize = 13.sp
-                            )
-                        }
-                    }
-
-                    // Center Avatar / Video preview
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(120.dp)
-                                .clip(CircleShape)
-                                .background(EmeraldPrimary.copy(alpha = 0.3f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(90.dp)
-                                    .clip(CircleShape)
-                                    .background(EmeraldPrimary),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    if (activeCall?.callType == "video") Icons.Default.Videocam else Icons.Default.Headphones,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(44.dp)
-                                )
-                            }
-                        }
-                        Spacer(Modifier.height(16.dp))
-                        Text(
-                            "Vipani Support Executive",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
-                        )
-                        Text(
-                            "Connected with Live Support",
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontSize = 12.sp
-                        )
-                    }
-
-                    // Controls
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 20.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(
-                            onClick = { isMicMuted = !isMicMuted },
-                            modifier = Modifier
-                                .size(54.dp)
-                                .clip(CircleShape)
-                                .background(if (isMicMuted) Color.Red else Color.White.copy(alpha = 0.2f))
-                        ) {
-                            Icon(
-                                if (isMicMuted) Icons.Default.MicOff else Icons.Default.Mic,
-                                contentDescription = "Mic",
-                                tint = Color.White
-                            )
-                        }
-
-                        if (activeCall?.callType == "video") {
-                            IconButton(
-                                onClick = { isCameraOn = !isCameraOn },
-                                modifier = Modifier
-                                    .size(54.dp)
-                                    .clip(CircleShape)
-                                    .background(if (!isCameraOn) Color.Red else Color.White.copy(alpha = 0.2f))
-                            ) {
-                                Icon(
-                                    if (isCameraOn) Icons.Default.Videocam else Icons.Default.VideocamOff,
-                                    contentDescription = "Camera",
-                                    tint = Color.White
-                                )
-                            }
-                        }
-
-                        IconButton(
-                            onClick = {
-                                activeCall?.let {
-                                    scope.launch { apiService.endSupportCall(it.id) }
+                            settings.javaScriptEnabled = true
+                            settings.domStorageEnabled = true
+                            settings.mediaPlaybackRequiresUserGesture = false
+                            webChromeClient = object : WebChromeClient() {
+                                override fun onPermissionRequest(request: PermissionRequest) {
+                                    request.grant(request.resources)
                                 }
-                                activeCall = null
-                            },
-                            modifier = Modifier
-                                .size(64.dp)
-                                .clip(CircleShape)
-                                .background(Color.Red)
-                        ) {
-                            Icon(Icons.Default.CallEnd, contentDescription = "End Call", tint = Color.White)
+                            }
+                            addJavascriptInterface(object {
+                                @JavascriptInterface
+                                fun callEnded() {
+                                    activeCall?.let { c ->
+                                        scope.launch { apiService.endSupportCall(c.id) }
+                                    }
+                                    activeCall = null
+                                }
+                            }, "Android")
+
+                            val cleanBase = prefManager.getBaseUrl().replace("/api", "")
+                            val encName = URLEncoder.encode(customerName, "UTF-8")
+                            val callUrl = "$cleanBase/call.html?call_id=${activeCall?.id}&role=customer&type=${activeCall?.callType}&name=$encName"
+                            loadUrl(callUrl)
                         }
-                    }
-                }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }

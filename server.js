@@ -105,6 +105,9 @@ function serveStatic(req, res, pathname) {
   if (cleanPath === "/support" || cleanPath === "/support/") {
     cleanPath = "/support.html";
   }
+  if (cleanPath === "/call" || cleanPath === "/call/") {
+    cleanPath = "/call.html";
+  }
   let filePath = path.join(PUBLIC_DIR, cleanPath);
 
   if (!filePath.startsWith(PUBLIC_DIR)) {

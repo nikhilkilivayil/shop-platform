@@ -31,6 +31,7 @@
 		D00000000000000000000013 /* Sources/ShopApp/Views/Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000013 /* Sources/ShopApp/Views/Theme.swift */; };
 		E10000000000000000000002 /* Sources/ShopApp/ViewModels/LanguageStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10000000000000000000001 /* Sources/ShopApp/ViewModels/LanguageStore.swift */; };
 		E20000000000000000000002 /* Sources/ShopApp/Views/Components/ProductImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20000000000000000000001 /* Sources/ShopApp/Views/Components/ProductImageView.swift */; };
+		E30000000000000000000002 /* Sources/ShopApp/Views/SupportChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30000000000000000000001 /* Sources/ShopApp/Views/SupportChatView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,6 +70,7 @@
 		C00000000000000000000013 /* Sources/ShopApp/Views/Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/ShopApp/Views/Theme.swift; sourceTree = "<group>"; };
 		E10000000000000000000001 /* Sources/ShopApp/ViewModels/LanguageStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/ShopApp/ViewModels/LanguageStore.swift; sourceTree = "<group>"; };
 		E20000000000000000000001 /* Sources/ShopApp/Views/Components/ProductImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/ShopApp/Views/Components/ProductImageView.swift; sourceTree = "<group>"; };
+		E30000000000000000000001 /* Sources/ShopApp/Views/SupportChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/ShopApp/Views/SupportChatView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,6 +107,7 @@
 			isa = PBXGroup;
 			children = (
 				E20000000000000000000001 /* Sources/ShopApp/Views/Components/ProductImageView.swift */,
+				E30000000000000000000001 /* Sources/ShopApp/Views/SupportChatView.swift */,
 				E10000000000000000000001 /* Sources/ShopApp/ViewModels/LanguageStore.swift */,
 				C00000000000000000000000 /* Sources/ShopApp/Models/Models.swift */,
 				C00000000000000000000001 /* Sources/ShopApp/Services/APIService.swift */,
@@ -217,6 +220,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E20000000000000000000002 /* Sources/ShopApp/Views/Components/ProductImageView.swift in Sources */,
+				E30000000000000000000002 /* Sources/ShopApp/Views/SupportChatView.swift in Sources */,
 				E10000000000000000000002 /* Sources/ShopApp/ViewModels/LanguageStore.swift in Sources */,
 				D00000000000000000000000 /* Sources/ShopApp/Models/Models.swift in Sources */,
 				D00000000000000000000001 /* Sources/ShopApp/Services/APIService.swift in Sources */,
@@ -284,6 +288,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Shop;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Used for customer care video calls";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Used for customer care audio voice notes and calls";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				MARKETING_VERSION = 1.0;
@@ -304,6 +310,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Shop;
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Used for customer care video calls";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Used for customer care audio voice notes and calls";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				MARKETING_VERSION = 1.0;

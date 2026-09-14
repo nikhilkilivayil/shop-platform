@@ -2326,8 +2326,13 @@ async function startCustCall(callType) {
     custLocalStream.getTracks().forEach(t => custPeerConnection.addTrack(t, custLocalStream));
 
     custPeerConnection.ontrack = e => {
-      const rv = document.getElementById("cust-remote-video");
-      if (rv) rv.srcObject = e.streams[0];
+      if (e.streams && e.streams[0]) {
+        const stream = e.streams[0];
+        const ra = document.getElementById("cust-remote-audio");
+        if (ra) { ra.srcObject = stream; ra.play().catch(() => {}); }
+        const rv = document.getElementById("cust-remote-video");
+        if (rv) { rv.srcObject = stream; rv.play().catch(() => {}); }
+      }
     };
 
     const offer = await custPeerConnection.createOffer();
@@ -2473,8 +2478,13 @@ async function answerCustIncomingCall(call) {
     custLocalStream.getTracks().forEach(t => custPeerConnection.addTrack(t, custLocalStream));
 
     custPeerConnection.ontrack = e => {
-      const rv = document.getElementById("cust-remote-video");
-      if (rv) rv.srcObject = e.streams[0];
+      if (e.streams && e.streams[0]) {
+        const stream = e.streams[0];
+        const ra = document.getElementById("cust-remote-audio");
+        if (ra) { ra.srcObject = stream; ra.play().catch(() => {}); }
+        const rv = document.getElementById("cust-remote-video");
+        if (rv) { rv.srcObject = stream; rv.play().catch(() => {}); }
+      }
     };
 
     custPeerConnection.onicecandidate = e => {

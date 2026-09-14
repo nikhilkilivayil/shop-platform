@@ -336,107 +336,18 @@ public struct SupportChatView: View {
     // MARK: - Active In-Call View
     @ViewBuilder
     private var activeCallView: some View {
-        ZStack {
-            Color(red: 0.05, green: 0.08, blue: 0.12).ignoresSafeArea()
-
-            VStack(spacing: 24) {
-                // Top header with timer
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(activeCall?.call_type == "video" ? lang.t("video_call") : lang.t("audio_call"))
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
-                        Text(formatDuration(callDurationSeconds))
-                            .font(.system(size: 13, design: .monospaced))
-                            .foregroundColor(.green)
-                    }
-                    Spacer()
+        if let call = activeCall {
+            WebRTCCallView(
+                callId: call.id,
+                callType: call.call_type,
+                role: "customer",
+                callerName: auth.currentUser?.name ?? "Customer",
+                onCallEnded: {
+                    endCall()
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
-
-                Spacer()
-
-                // Center visual (Avatar for audio or video simulated preview)
-                if activeCall?.call_type == "video" && isCameraOn {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.black.opacity(0.6))
-                            .frame(maxWidth: .infinity, maxHeight: 380)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(ShopTheme.primary, lineWidth: 2)
-                            )
-                        VStack(spacing: 12) {
-                            Image(systemName: "person.crop.rectangle.fill")
-                                .font(.system(size: 70))
-                                .foregroundColor(ShopTheme.primary)
-                            Text("Vipani Support Executive")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.white)
-                            Text("Live 2-Way Video Connected")
-                                .font(.system(size: 12))
-                                .foregroundColor(.green)
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                } else {
-                    VStack(spacing: 16) {
-                        ZStack {
-                            Circle()
-                                .fill(ShopTheme.primary.opacity(0.3))
-                                .frame(width: 140, height: 140)
-                            Circle()
-                                .fill(ShopTheme.primary)
-                                .frame(width: 100, height: 100)
-                            Image(systemName: "headphones")
-                                .font(.system(size: 44))
-                                .foregroundColor(.white)
-                        }
-                        Text("Vipani Care Executive")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.white)
-                        Text(lang.t("call_connecting"))
-                            .font(.system(size: 13))
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                }
-
-                Spacer()
-
-                // Bottom Call Controls
-                HStack(spacing: 24) {
-                    Button(action: { isMicMuted.toggle() }) {
-                        Image(systemName: isMicMuted ? "mic.slash.fill" : "mic.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.white)
-                            .frame(width: 54, height: 54)
-                            .background(isMicMuted ? Color.red : Color.gray.opacity(0.4))
-                            .clipShape(Circle())
-                    }
-
-                    if activeCall?.call_type == "video" {
-                        Button(action: { isCameraOn.toggle() }) {
-                            Image(systemName: isCameraOn ? "video.fill" : "video.slash.fill")
-                                .font(.system(size: 20))
-                                .foregroundColor(.white)
-                                .frame(width: 54, height: 54)
-                                .background(isCameraOn ? Color.gray.opacity(0.4) : Color.red)
-                                .clipShape(Circle())
-                        }
-                    }
-
-                    Button(action: { endCall() }) {
-                        Image(systemName: "phone.down.fill")
-                            .font(.system(size: 22))
-                            .foregroundColor(.white)
-                            .frame(width: 64, height: 64)
-                            .background(Color.red)
-                            .clipShape(Circle())
-                    }
-                }
-                .padding(.bottom, 36)
-            }
+            )
+        } else {
+            EmptyView()
         }
     }
 

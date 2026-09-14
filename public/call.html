@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>വിപണി ലൈവ് കോൾ - Live Call</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0f172a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #ffffff;
+    }
+
+    #call-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f172a;
+    }
+
+    #remote-video-wrap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      overflow: hidden;
+      background: #090d16;
+    }
+    #remote-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    #remote-audio {
+      display: none;
+    }
+
+    #local-video-wrap {
+      position: absolute;
+      top: 5rem;
+      right: 1.25rem;
+      width: 105px;
+      height: 150px;
+      border-radius: 16px;
+      overflow: hidden;
+      z-index: 10;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      border: 2px solid rgba(255,255,255,0.3);
+      background: #1e293b;
+      transition: all 0.3s ease;
+    }
+    #local-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    #audio-call-visual {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+    }
+    .pulsing-avatar-wrap {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .pulse-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.25);
+      animation: pulse-wave 2.2s infinite ease-out;
+    }
+    .pulse-ring:nth-child(2) {
+      animation-delay: 0.7s;
+    }
+    @keyframes pulse-wave {
+      0% { transform: scale(0.9); opacity: 0.9; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+    .avatar-icon {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: #0f766e;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.2rem;
+      z-index: 3;
+      box-shadow: 0 10px 30px rgba(15, 118, 110, 0.5);
+    }
+
+    #top-bar {
+      position: relative;
+      z-index: 20;
+      width: 100%;
+      padding: 1.5rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0) 100%);
+    }
+    .caller-meta {
+      display: flex;
+      flex-direction: column;
+    }
+    .caller-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    }
+    .call-status {
+      font-size: 0.85rem;
+      color: #34d399;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.2rem;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    }
+    .call-status::before {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 8px #34d399;
+    }
+    .call-timer {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 1rem;
+      font-weight: 700;
+      background: rgba(0,0,0,0.5);
+      padding: 0.4rem 0.85rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    #bottom-bar {
+      position: relative;
+      z-index: 20;
+      width: 100%;
+      padding: 1.5rem 1.5rem 2.5rem 1.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem;
+      background: linear-gradient(0deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0) 100%);
+    }
+    .action-btn {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: none;
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all 0.2s ease;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    }
+    .action-btn:active {
+      transform: scale(0.92);
+    }
+    .action-btn.active-off {
+      background: #ef4444 !important;
+    }
+    .action-btn.end-call {
+      width: 68px;
+      height: 68px;
+      background: #ef4444;
+      font-size: 1.8rem;
+      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.5);
+    }
+    .action-btn.end-call:hover {
+      background: #dc2626;
+    }
+
+    #notice-box {
+      position: absolute;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 30;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 1.25rem 1.75rem;
+      text-align: center;
+      display: none;
+      max-width: 85%;
+    }
+    #notice-text {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="call-container">
+    <div id="top-bar">
+      <div class="caller-meta">
+        <div class="caller-title" id="display-name">വിപണി കസ്റ്റമർ കെയർ</div>
+        <div class="call-status" id="status-label">കണക്റ്റ് ചെയ്യുന്നു...</div>
+      </div>
+      <div class="call-timer" id="call-timer">00:00</div>
+    </div>
+
+    <div id="remote-video-wrap">
+      <video id="remote-video" autoplay playsinline></video>
+      <audio id="remote-audio" autoplay playsinline></audio>
+    </div>
+
+    <div id="local-video-wrap" style="display: none;">
+      <video id="local-video" autoplay playsinline muted></video>
+    </div>
+
+    <div id="audio-call-visual" style="display: none;">
+      <div class="pulsing-avatar-wrap">
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring"></div>
+        <div class="avatar-icon">🎧</div>
+      </div>
+      <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.35rem;" id="audio-caller-title">വിപണി സപ്പോർട്ട് എക്സിക്യൂട്ടീവ്</h2>
+      <p style="color: #94a3b8; font-size: 0.9rem;" id="audio-call-desc">HD Voice Call Active</p>
+    </div>
+
+    <div id="notice-box">
+      <p id="notice-text">കണക്റ്റ് ചെയ്യുന്നു...</p>
+    </div>
+
+    <div id="bottom-bar">
+      <button class="action-btn" id="btn-mic" title="Mute/Unmute Mic">🎙️</button>
+      <button class="action-btn" id="btn-cam" title="Toggle Camera" style="display: none;">📹</button>
+      <button class="action-btn" id="btn-flip" title="Flip Camera" style="display: none;">🔄</button>
+      <button class="action-btn end-call" id="btn-end" title="End Call">📞</button>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const callId = urlParams.get("call_id");
+    const threadId = urlParams.get("thread_id");
+    const myRole = urlParams.get("role") || "customer";
+    const callType = urlParams.get("type") === "video" ? "video" : "audio";
+    const displayName = urlParams.get("name") || (myRole === "customer" ? "വിപണി സപ്പോർട്ട്" : "Customer");
+
+    document.getElementById("display-name").textContent = displayName;
+    document.getElementById("audio-caller-title").textContent = displayName;
+
+    let localStream = null;
+    let peerConnection = null;
+    let isMicMuted = false;
+    let isCamOff = false;
+    let currentFacingMode = "user";
+    let timerInterval = null;
+    let callSeconds = 0;
+    let pollInterval = null;
+    let isConnected = false;
+    let isCallEnded = false;
+
+    const rtcConfig = {
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
+        { urls: "stun:stun3.l.google.com:19302" },
+        { urls: "stun:stun4.l.google.com:19302" }
+      ]
+    };
+
+    const statusLabel = document.getElementById("status-label");
+    const callTimer = document.getElementById("call-timer");
+    const remoteVideo = document.getElementById("remote-video");
+    const remoteAudio = document.getElementById("remote-audio");
+    const localVideo = document.getElementById("local-video");
+    const localVideoWrap = document.getElementById("local-video-wrap");
+    const audioCallVisual = document.getElementById("audio-call-visual");
+    const btnMic = document.getElementById("btn-mic");
+    const btnCam = document.getElementById("btn-cam");
+    const btnFlip = document.getElementById("btn-flip");
+    const btnEnd = document.getElementById("btn-end");
+
+    if (callType === "video") {
+      audioCallVisual.style.display = "none";
+      localVideoWrap.style.display = "block";
+      btnCam.style.display = "flex";
+      btnFlip.style.display = "flex";
+    } else {
+      audioCallVisual.style.display = "flex";
+      localVideoWrap.style.display = "none";
+      btnCam.style.display = "none";
+      btnFlip.style.display = "none";
+    }
+
+    btnMic.addEventListener("click", () => {
+      if (!localStream) return;
+      isMicMuted = !isMicMuted;
+      localStream.getAudioTracks().forEach(t => t.enabled = !isMicMuted);
+      btnMic.classList.toggle("active-off", isMicMuted);
+      btnMic.textContent = isMicMuted ? "🔇" : "🎙️";
+    });
+
+    btnCam.addEventListener("click", () => {
+      if (!localStream || callType !== "video") return;
+      isCamOff = !isCamOff;
+      localStream.getVideoTracks().forEach(t => t.enabled = !isCamOff);
+      btnCam.classList.toggle("active-off", isCamOff);
+      btnCam.textContent = isCamOff ? "🚫" : "📹";
+    });
+
+    btnFlip.addEventListener("click", async () => {
+      if (callType !== "video" || !localStream) return;
+      currentFacingMode = currentFacingMode === "user" ? "environment" : "user";
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { facingMode: { exact: currentFacingMode } }
+        });
+        const newTrack = newStream.getVideoTracks()[0];
+        const oldTrack = localStream.getVideoTracks()[0];
+        
+        if (peerConnection) {
+          const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === "video");
+          if (sender) sender.replaceTrack(newTrack);
+        }
+
+        localStream.removeTrack(oldTrack);
+        oldTrack.stop();
+        localStream.addTrack(newTrack);
+        localVideo.srcObject = localStream;
+      } catch (err) {
+        console.warn("Flip camera fallback:", err);
+      }
+    });
+
+    btnEnd.addEventListener("click", () => {
+      endCallAndClose();
+    });
+
+    async function initCall() {
+      showNotice("മൈക്രോഫോണും ക്യാമറയും കണക്റ്റ് ചെയ്യുന്നു...");
+      try {
+        const constraints = {
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          },
+          video: callType === "video" ? {
+            facingMode: currentFacingMode,
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          } : false
+        };
+
+        localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        hideNotice();
+
+        if (callType === "video") {
+          localVideo.srcObject = localStream;
+          localVideo.play().catch(() => {});
+        }
+
+        setupPeerConnection();
+
+      } catch (err) {
+        console.error("Camera/Mic permission error:", err);
+        showNotice("ക്യാമറയോ മൈക്രോഫോണോ ഓപ്പൺ ചെയ്യാൻ സാധിച്ചില്ല. ദയവായി അനുമതി നൽകുക.");
+        setTimeout(() => endCallAndClose(), 3500);
+      }
+    }
+
+    function setupPeerConnection() {
+      peerConnection = new RTCPeerConnection(rtcConfig);
+
+      localStream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, localStream);
+      });
+
+      peerConnection.ontrack = (event) => {
+        console.log("WebRTC ontrack received:", event.streams);
+        if (event.streams && event.streams[0]) {
+          const stream = event.streams[0];
+          
+          remoteAudio.srcObject = stream;
+          remoteAudio.play().catch(e => console.log("Audio autoplay error:", e));
+
+          if (callType === "video") {
+            remoteVideo.srcObject = stream;
+            remoteVideo.play().catch(e => console.log("Video autoplay error:", e));
+          }
+          
+          onCallConnected();
+        }
+      };
+
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate && callId) {
+          fetch("/api/support/call/ice", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              call_id: callId,
+              candidate: event.candidate,
+              sender_role: myRole
+            })
+          }).catch(e => console.error("ICE send failed:", e));
+        }
+      };
+
+      peerConnection.onconnectionstatechange = () => {
+        if (peerConnection.connectionState === "connected") {
+          onCallConnected();
+        } else if (peerConnection.connectionState === "disconnected" || peerConnection.connectionState === "failed") {
+          statusLabel.textContent = "റീകണക്റ്റ് ചെയ്യുന്നു...";
+        }
+      };
+
+      startSignaling();
+    }
+
+    async function startSignaling() {
+      if (!callId) {
+        showNotice("Invalid Call ID");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/support/call/" + callId + "/status");
+        if (!res.ok) throw new Error("Call not found");
+        const data = await res.json();
+        const call = data.call;
+
+        if (call.status === "ended" || call.status === "declined") {
+          endCallAndClose();
+          return;
+        }
+
+        if (call.caller_role === myRole) {
+          if (!call.offer_sdp) {
+            statusLabel.textContent = "കോൾ റിംഗ് ചെയ്യുന്നു...";
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            await fetch("/api/support/call/answer", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ call_id: callId, offer_sdp: offer, status: "ringing" })
+            });
+          } else {
+            statusLabel.textContent = "റിംഗ് ചെയ്യുന്നു...";
+          }
+        } else {
+          statusLabel.textContent = "കണക്റ്റിംഗ്...";
+          if (call.offer_sdp && !peerConnection.currentRemoteDescription) {
+            let offerObj = typeof call.offer_sdp === "string" ? JSON.parse(call.offer_sdp) : call.offer_sdp;
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offerObj));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+
+            await fetch("/api/support/call/answer", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                call_id: callId,
+                answer_sdp: answer
+              })
+            });
+            onCallConnected();
+          }
+        }
+
+      } catch (err) {
+        console.error("Signaling init error:", err);
+      }
+
+      clearInterval(pollInterval);
+      pollInterval = setInterval(async () => {
+        if (isCallEnded) return;
+        try {
+          const res = await fetch("/api/support/call/" + callId + "/status");
+          if (!res.ok) return;
+          const data = await res.json();
+          const call = data.call;
+
+          if (call.status === "ended" || call.status === "declined") {
+            showNotice("കോൾ അവസാനിച്ചു (Call ended)");
+            endCallAndClose();
+            return;
+          }
+
+          if (call.caller_role === myRole && call.answer_sdp && peerConnection && !peerConnection.currentRemoteDescription) {
+            let answerObj = typeof call.answer_sdp === "string" ? JSON.parse(call.answer_sdp) : call.answer_sdp;
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answerObj));
+            onCallConnected();
+          }
+
+          if (call.ice_candidates && peerConnection) {
+            let candidates = [];
+            try { candidates = JSON.parse(call.ice_candidates); } catch(e) {}
+            for (const c of candidates) {
+              if (c.sender_role !== myRole && c.candidate) {
+                try {
+                  await peerConnection.addIceCandidate(new RTCIceCandidate(c.candidate));
+                } catch(e) {}
+              }
+            }
+          }
+
+        } catch (err) {
+          console.error("Poll error:", err);
+        }
+      }, 1200);
+    }
+
+    function onCallConnected() {
+      if (isConnected) return;
+      isConnected = true;
+      statusLabel.textContent = "കണക്റ്റ് ആയി (Connected)";
+      statusLabel.style.color = "#34d399";
+      hideNotice();
+
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        callSeconds++;
+        const mins = String(Math.floor(callSeconds / 60)).padStart(2, "0");
+        const secs = String(callSeconds % 60).padStart(2, "0");
+        callTimer.textContent = mins + ":" + secs;
+      }, 1000);
+    }
+
+    function showNotice(msg) {
+      const box = document.getElementById("notice-box");
+      document.getElementById("notice-text").textContent = msg;
+      box.style.display = "block";
+    }
+
+    function hideNotice() {
+      document.getElementById("notice-box").style.display = "none";
+    }
+
+    async function endCallAndClose() {
+      if (isCallEnded) return;
+      isCallEnded = true;
+
+      clearInterval(pollInterval);
+      clearInterval(timerInterval);
+
+      if (callId) {
+        try {
+          fetch("/api/support/call/end", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ call_id: callId, status: "ended" })
+          });
+        } catch(e) {}
+      }
+
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+      if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+      }
+
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.callEnded) {
+        window.webkit.messageHandlers.callEnded.postMessage({ status: "ended", callId: callId });
+      }
+      if (window.Android && window.Android.callEnded) {
+        window.Android.callEnded();
+      }
+
+      try { window.close(); } catch(e) {}
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      initCall();
+    });
+  </script>
+</body>
+</html>

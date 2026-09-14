@@ -365,8 +365,19 @@ async function initiateCall(callType) {
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
     peerConnection.ontrack = event => {
-      const remoteVideo = document.getElementById("remote-video");
-      if (remoteVideo) remoteVideo.srcObject = event.streams[0];
+      if (event.streams && event.streams[0]) {
+        const stream = event.streams[0];
+        const remoteAudio = document.getElementById("remote-audio");
+        if (remoteAudio) {
+          remoteAudio.srcObject = stream;
+          remoteAudio.play().catch(e => console.log("Audio autoplay error:", e));
+        }
+        const remoteVideo = document.getElementById("remote-video");
+        if (remoteVideo) {
+          remoteVideo.srcObject = stream;
+          remoteVideo.play().catch(e => console.log("Video autoplay error:", e));
+        }
+      }
     };
 
     const offer = await peerConnection.createOffer();
@@ -501,8 +512,19 @@ async function answerIncomingCall(call) {
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
     peerConnection.ontrack = event => {
-      const remoteVideo = document.getElementById("remote-video");
-      if (remoteVideo) remoteVideo.srcObject = event.streams[0];
+      if (event.streams && event.streams[0]) {
+        const stream = event.streams[0];
+        const remoteAudio = document.getElementById("remote-audio");
+        if (remoteAudio) {
+          remoteAudio.srcObject = stream;
+          remoteAudio.play().catch(e => console.log("Audio autoplay error:", e));
+        }
+        const remoteVideo = document.getElementById("remote-video");
+        if (remoteVideo) {
+          remoteVideo.srcObject = stream;
+          remoteVideo.play().catch(e => console.log("Video autoplay error:", e));
+        }
+      }
     };
 
     peerConnection.onicecandidate = e => {
