@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shop.customer.data.local.Localization
 import com.shop.customer.data.models.CartItem
+import com.shop.customer.ui.components.ProductImageBanner
 import com.shop.customer.ui.theme.*
 
 @Composable
