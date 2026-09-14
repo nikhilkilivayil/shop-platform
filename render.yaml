@@ -3,6 +3,8 @@ services:
     name: shop-platform
     env: node
     plan: free
+    branch: main
+    autoDeploy: true
     buildCommand: "echo 'No build dependencies needed'"
     startCommand: "node server.js"
     envVars:
