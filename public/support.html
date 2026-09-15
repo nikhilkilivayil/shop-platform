@@ -239,6 +239,14 @@
       background: #0284c7;
       color: white;
     }
+    .btn-call.pstn-call {
+      border-color: #ea580c;
+      color: #ea580c;
+    }
+    .btn-call.pstn-call:hover {
+      background: #ea580c;
+      color: white;
+    }
 
     /* Messages Stream */
     .chat-messages {
@@ -702,6 +710,9 @@
             <button class="btn-call video-call" id="start-video-call-btn">
               📹 വീഡിയോ കോൾ (Video Call)
             </button>
+            <button class="btn-call pstn-call" id="start-pstn-call-btn" title="Call directly to customer's mobile phone via Airtel IQ PSTN Network">
+              📱 മൊബൈൽ കോൾ (PSTN Call)
+            </button>
             <button class="btn btn-secondary btn-sm" id="refresh-chat-btn" title="Refresh messages">
               🔄
             </button>
@@ -826,6 +837,8 @@
   <!-- Audio Chimes for Incoming Call -->
   <audio id="ringtone-audio" loop preload="auto" src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"></audio>
 
+  <!-- Telephony CPaaS Web SDK -->
+  <script src="telephony-web-sdk.js"></script>
   <script src="support.js"></script>
 </body>
 </html>

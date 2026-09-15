@@ -709,6 +709,129 @@ function cleanupCall() {
   stopRingtone();
 }
 
+// --- Outbound PSTN Calling via Airtel IQ Telephony Gateway ---
+async function initiatePstnCall() {
+  if (!activeThread) {
+    alert("ദയവായി ഒരു കസ്റ്റമർ ചാറ്റ് തിരഞ്ഞെടുക്കുക. (Please select a customer thread first)");
+    return;
+  }
+
+  let defaultPhone = activeThread.customer_phone || "";
+  let cleanDigits = defaultPhone.replace(/[^0-9]/g, "");
+  let promptDefault = cleanDigits.length >= 10 ? cleanDigits.slice(-10) : "9847123456";
+
+  let customerPhone = prompt(
+    "കസ്റ്റമറെ നേരിട്ട് മൊബൈൽ ഫോണിൽ വിളിക്കുക (PSTN Call via Airtel IQ)\n\nകസ്റ്റമറുടെ 10 അക്ക മൊബൈൽ നമ്പർ നൽകുക:",
+    promptDefault
+  );
+
+  if (!customerPhone) return;
+
+  customerPhone = customerPhone.trim().replace(/[^0-9]/g, "");
+  if (customerPhone.length < 10) {
+    alert("സാധുവായ 10 അക്ക ഫോൺ നമ്പർ നൽകുക. (Invalid 10-digit phone number)");
+    return;
+  }
+
+  const formattedNumber = "+91" + customerPhone.slice(-10);
+  const telephonyServerUrl = localStorage.getItem("telephony_server_url") || "http://localhost:8000";
+  const apiKey = localStorage.getItem("telephony_api_key") || "tp_live_vipani_shop_key_2026";
+
+  if (typeof TelephonyClient === "undefined") {
+    alert("Telephony SDK not loaded. Ensure telephony-web-sdk.js is available.");
+    return;
+  }
+
+  const client = new TelephonyClient({
+    apiKey: apiKey,
+    serverUrl: telephonyServerUrl
+  });
+
+  const pstnBtn = document.getElementById("start-pstn-call-btn");
+  const originalText = pstnBtn ? pstnBtn.innerHTML : "";
+  if (pstnBtn) {
+    pstnBtn.disabled = true;
+    pstnBtn.innerHTML = "<span>⏳ വിളിക്കുന്നു...</span>";
+  }
+
+  try {
+    const call = await client.makeCall({
+      to: formattedNumber,
+      agentId: currentUser ? (currentUser.name || currentUser.id) : "support_agent",
+      metadata: {
+        thread_id: activeThread.id,
+        customer_name: activeThread.customer_name || "Customer"
+      }
+    });
+
+    if (pstnBtn) {
+      pstnBtn.innerHTML = "<span>🔔 റിംഗ് ചെയ്യുന്നു...</span>";
+    }
+
+    // Post call start notice into thread chat
+    if (activeThread) {
+      await fetch(`/api/support/threads/${activeThread.id}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + currentToken
+        },
+        body: JSON.stringify({
+          text: `📱 [മൊബൈൽ കോൾ ആരംഭിച്ചു / PSTN Call Initiated]\nഫോൺ നമ്പർ: ${formattedNumber}\nകോൾ ഐഡി: ${call.id}\nറൂട്ട്: Airtel IQ SIP Trunk (FreeSWITCH)`,
+          type: "text"
+        })
+      });
+      loadMessages();
+    }
+
+    // Monitor call status in background
+    client.pollUntilFinished(call.id, {
+      intervalMs: 2000,
+      timeoutMs: 120000,
+      onUpdate: (updatedCall) => {
+        if (pstnBtn && updatedCall.status === "answered") {
+          pstnBtn.innerHTML = "<span>🟢 സംസാരിക്കുന്നു...</span>";
+        }
+      }
+    }).then(async (finalCall) => {
+      if (pstnBtn) {
+        pstnBtn.disabled = false;
+        pstnBtn.innerHTML = originalText;
+      }
+
+      const durText = finalCall.duration_sec ? `${finalCall.duration_sec} സെക്കൻഡ്` : "പൂർത്തിയായി";
+      alert(`✅ മൊബൈൽ കോൾ അവസാനിച്ചു.\nദൈർഘ്യം: ${durText}\nഓഡിയോ റെക്കോർഡിംഗ് സെർവറിൽ സുരക്ഷിതമായി സൂക്ഷിച്ചിരിക്കുന്നു.`);
+
+      if (activeThread) {
+        await fetch(`/api/support/threads/${activeThread.id}/messages`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + currentToken
+          },
+          body: JSON.stringify({
+            text: `📞 [മൊബൈൽ കോൾ പൂർത്തിയായി / PSTN Call Completed]\nദൈർഘ്യം: ${finalCall.duration_sec || 0} സെക്കൻഡ്\nസ്റ്റാറ്റസ്: ${finalCall.status}\n🎙️ കോൾ റെക്കോർഡിംഗ് Vipani Telephony Dashboard-ൽ ലഭ്യമാണ്.`,
+            type: "text"
+          })
+        });
+        loadMessages();
+      }
+    }).catch(() => {
+      if (pstnBtn) {
+        pstnBtn.disabled = false;
+        pstnBtn.innerHTML = originalText;
+      }
+    });
+
+  } catch (err) {
+    alert("കോൾ ആരംഭിക്കാൻ കഴിഞ്ഞില്ല: " + err.message);
+    if (pstnBtn) {
+      pstnBtn.disabled = false;
+      pstnBtn.innerHTML = originalText;
+    }
+  }
+}
+
 function playRingtone() {
   // Simple visual & audio alert
 }
@@ -773,6 +896,10 @@ function setupEventListeners() {
   // Calling Buttons
   document.getElementById("start-audio-call-btn").addEventListener("click", () => initiateCall("audio"));
   document.getElementById("start-video-call-btn").addEventListener("click", () => initiateCall("video"));
+  const pstnBtn = document.getElementById("start-pstn-call-btn");
+  if (pstnBtn) {
+    pstnBtn.addEventListener("click", initiatePstnCall);
+  }
   document.getElementById("refresh-chat-btn").addEventListener("click", () => {
     loadMessages();
     loadThreads();
