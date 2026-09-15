@@ -457,8 +457,8 @@ async function initiateCall(callType) {
     startCallStatusPolling();
 
   } catch (err) {
-    alert("കോൾ ആരംഭിക്കാൻ സാധിച്ചില്ല: " + err.message);
-    cleanupCall();
+    console.error("Call initiate error:", err);
+    showCallEndedNotification("കോൾ ആരംഭിക്കാൻ സാധിച്ചില്ല", err.message, "⚠️");
   }
 }
 
@@ -466,17 +466,30 @@ function setupCallModal(callType, participantName) {
   document.getElementById("call-modal").style.display = "flex";
   const isVideo = callType === "video";
   const remoteVideo = document.getElementById("remote-video");
+  const localVideoWrap = document.getElementById("local-video-wrap");
   const localVideo = document.getElementById("local-video");
   const audioPlaceholder = document.getElementById("audio-call-placeholder");
+  const btnToggleCam = document.getElementById("btn-toggle-cam");
+  const callToast = document.getElementById("call-toast-overlay");
+
+  if (callToast) callToast.style.display = "none";
+
+  const headerName = document.getElementById("call-header-name");
+  if (headerName) headerName.textContent = participantName;
+  const headerStatus = document.getElementById("call-header-status");
+  if (headerStatus) headerStatus.textContent = "കണക്റ്റ് ആയി (Connected)";
 
   if (isVideo) {
     audioPlaceholder.style.display = "none";
     remoteVideo.style.display = "block";
-    localVideo.style.display = "block";
+    if (localVideoWrap) localVideoWrap.style.display = "flex";
+    if (btnToggleCam) btnToggleCam.style.display = "flex";
     localVideo.srcObject = localStream;
+    localVideo.play().catch(() => {});
   } else {
     remoteVideo.style.display = "none";
-    localVideo.style.display = "none";
+    if (localVideoWrap) localVideoWrap.style.display = "none";
+    if (btnToggleCam) btnToggleCam.style.display = "none";
     audioPlaceholder.style.display = "flex";
     document.getElementById("call-participant-name").textContent = participantName;
   }
@@ -491,6 +504,28 @@ function setupCallModal(callType, participantName) {
   }, 1000);
 }
 
+function showCallEndedNotification(title, sub, icon = "📞") {
+  const toast = document.getElementById("call-toast-overlay");
+  if (toast) {
+    const iconEl = document.getElementById("call-toast-icon");
+    if (iconEl) iconEl.textContent = icon;
+    const titleEl = document.getElementById("call-toast-title");
+    if (titleEl) titleEl.textContent = title || "കോൾ അവസാനിച്ചു";
+    const subEl = document.getElementById("call-toast-sub");
+    if (subEl) subEl.textContent = sub || "Call Ended";
+    toast.style.display = "flex";
+  }
+  clearInterval(callPollInterval);
+  clearInterval(callTimerInterval);
+  if (localStream) {
+    localStream.getTracks().forEach(t => t.stop());
+    localStream = null;
+  }
+  setTimeout(() => {
+    cleanupCall();
+  }, 1300);
+}
+
 function startCallStatusPolling() {
   clearInterval(callPollInterval);
   callPollInterval = setInterval(async () => {
@@ -502,8 +537,7 @@ function startCallStatusPolling() {
       const call = data.call;
 
       if (call.status === "ended" || call.status === "declined") {
-        alert("കോൾ അവസാനിച്ചു (Call ended)");
-        cleanupCall();
+        showCallEndedNotification("കോൾ അവസാനിച്ചു", "ഉപഭോക്താവ് കോൾ അവസാനിപ്പിച്ചു (Customer ended call)");
         return;
       }
 
@@ -635,22 +669,22 @@ async function answerIncomingCall(call) {
     startCallStatusPolling();
 
   } catch (err) {
-    alert("ഇൻകമിംഗ് കോൾ കണക്ട് ചെയ്യാൻ സാധിച്ചില്ല: " + err.message);
-    cleanupCall();
+    console.error("Answer call error:", err);
+    showCallEndedNotification("കണക്ട് ചെയ്യാൻ സാധിച്ചില്ല", err.message, "⚠️");
   }
 }
 
 async function endCurrentCall() {
   if (currentCall) {
     try {
-      await fetch("/api/support/call/end", {
+      fetch("/api/support/call/end", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ call_id: currentCall.call_id, status: "ended" })
       });
     } catch(e) {}
   }
-  cleanupCall();
+  showCallEndedNotification("കോൾ അവസാനിപ്പിച്ചു", "Call ended by Support");
 }
 
 function cleanupCall() {
@@ -670,6 +704,8 @@ function cleanupCall() {
   currentCall = null;
   document.getElementById("call-modal").style.display = "none";
   document.getElementById("incoming-call-banner").style.display = "none";
+  const toast = document.getElementById("call-toast-overlay");
+  if (toast) toast.style.display = "none";
   stopRingtone();
 }
 
